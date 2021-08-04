@@ -89,15 +89,15 @@ Figure.1 A caption.
 Based on the string at the end of the image file name, adjust the width and height as follows.
 
 ```plain
-![A cat.](cat@2x.jpg)
+![A cat.](cat@2x.jpg) //400x300.
 ↓
 <p><img src="cat@2x.jpg" alt="A cat." width="200" height="150"></p>
 
-![A cat.](cat_300dpi.jpg)
+![A cat.](cat_300dpi.jpg) //400x300
 ↓
 <p><img src="cat_300dpi.jpg" alt="A cat." width="128" height="96"></p>
 
-![A cat.](cat_300ppi.jpg)
+![A cat.](cat_300ppi.jpg) //400x300
 ↓
 <p><img src="cat_300ppi.jpg" alt="A cat." width="128" height="96"></p>
 ```

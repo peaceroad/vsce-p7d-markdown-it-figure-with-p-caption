@@ -1,0 +1,45 @@
+{
+  "name": "p7d-markdown-it-figure-with-p-caption",
+  "displayName": "p7d-markdown-it-figure-with-p-caption",
+  "description": "convert into the figure element with the figcaption element, for a paragraph with one only image, a table or a code block, and by writing a caption paragraph immediately before or after.",
+  "publisher": "peaceroad",
+  "repository": {
+    "url": "https://github.com/peaceroad/vsce-p7d-markdown-it-figure-with-p-caption"
+  },
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.57.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
+  "activationEvents": [],
+  "contributes": {
+    "markdown.markdownItPlugins": true,
+    "markdown.previewStyles": [
+      "./style/figure-with-p-caption.css"
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "p7d-markdown-it-figure-with-p-caption",
+      "properties": {
+        "p7dMarkdownItFigureWithPCaption": {
+          "type": "boolean",
+          "default": false,
+          "description": "Disable the default CSS of p7d-markdown-it-figure-with-p-caption."
+        }
+      }
+    }
+  },
+  "main": "./extension.js",
+  "dependencies": {
+    "@peaceroad/markdown-it-figure-with-p-caption": "^0.1.6",
+    "@peaceroad/markdown-it-renderer-image": "^0.1.3"
+  }
+}

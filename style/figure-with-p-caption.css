@@ -1,0 +1,58 @@
+@charset "UTF-8";
+
+.vscode-body figure[class|="f"] {
+  margin: 1.5em 0 0;
+}
+.vscode-body figure[class|="f"] + * {
+  margin-block-start: 1.5em;
+}
+.vscode-body figure[class|="f"] figcaption {
+  display: table;
+  inline-size: fit-content;
+  font-size: 0.95em;
+  line-height: 1.55;
+  margin-inline-start: auto;
+  margin-inline-end: auto;
+}
+.vscode-body figure[class|="f"] figcaption:first-child {
+  margin-block-end: 0.5em;
+}
+.vscode-body figure[class|="f"] figcaption:last-child {
+  margin-block-start: 0.5em;
+}
+.vscode-body figure[class|="f"] figcaption span[class$="label"] {
+  font-weight: bold;
+  margin-inline-end: 0.5em;
+}
+.vscode-body figure[class|="f"] figcaption span[class$="joint"] {
+  font-weight: normal;
+}
+.vscode-body figure[class|="f"] > img {
+  display: block;
+  margin: 0 auto;
+  max-inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: attr(width)/attr(height);
+}
+.vscode-body figure[class|="f"] > :is(video, table, pre, .example) {
+  margin: 0 auto;
+}
+.vscode-body figure[class|="f"] > table {
+  border-block-start: 1px solid currentcolor;
+  border-inline-start: 1px solid currentcolor;
+}
+.vscode-body figure[class|="f"] > table :is(th, td) {
+  font-size: 0.95em;
+  line-height: 1.55;
+  padding: 0.5em 1.5em;
+  border-block-end: 1px solid currentcolor;
+  border-inline-end: 1px solid currentcolor;
+}
+.vscode-body figure[class|="f"] > pre > :is(code, samp) {
+  display: block;
+  font-family: var(--vscode-editor-font-family), monospace;
+  font-size: 0.95em;
+  line-height: 1.55;
+  word-break: break-all;
+  white-space: break-spaces;
+}

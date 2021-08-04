@@ -7,7 +7,7 @@ Code. Sample Markdown
 ```md
 Figure 1. VSCode with this plugin
 
-![Figure](docs/screenshot.png)
+![Figure](docs/screenshot.jpg)
 ```
 
 CODE H: Sample HTML
@@ -15,11 +15,11 @@ CODE H: Sample HTML
 ```html
 <figure class="f-img">
 <figcaption><span class="f-img-label">Figure<span class="f-img-label-joint">.</span></span> VSCode with this plugin</figcaption>
-<img src="docs/screenshot.png" alt="Figure" width="1407" height="906">
+<img src="docs/screenshot.jpg" alt="Figure" width="1407" height="906">
 </figure>
 ```
 
-![Figure](docs/screenshot.png)
+![Figure](docs/screenshot.jpg)
 
 Figure. VSCode with this plugin
 

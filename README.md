@@ -123,8 +123,9 @@ Since the width and height attributes are set for img elements, it is possible t
 
 ```css
 .vscode-body img:is([alt=" "], [alt="i"], [alt="inline"], [alt^="i:"], [alt^="inline:"]) {
-  max-block-size: 1.5em;
   inline-size: auto;
+  block-size: auto;
+  max-block-size: 1.5em;
   vertical-align: middle;
 }
 ```

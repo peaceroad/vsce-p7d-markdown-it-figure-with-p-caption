@@ -37,8 +37,9 @@
   margin: 0 auto;
 }
 .vscode-body img:is([alt=" "], [alt="i"], [alt="inline"], [alt^="i:"], [alt^="inline:"]) {
-  max-block-size: 1.5em;
   inline-size: auto;
+  block-size: auto;
+  max-block-size: 1.5em;
   vertical-align: middle;
 }
 .vscode-body figure[class|="f"] > :is(video, table, pre, .example) {

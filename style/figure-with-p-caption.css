@@ -27,13 +27,20 @@
 .vscode-body figure[class|="f"] figcaption span[class$="joint"] {
   font-weight: normal;
 }
-.vscode-body figure[class|="f"] > img {
-  display: block;
-  margin: 0 auto;
+.vscode-body img[width] {
   max-inline-size: 100%;
   block-size: auto;
   aspect-ratio: attr(width)/attr(height);
 }
+.vscode-body figure[class|="f"] > img {
+  display: block;
+  margin: 0 auto;
+}
+.vscode-body p > img[alt=" "] {
+  max-block-size: 1.5em;
+  vertical-align: middle;
+}
+
 .vscode-body figure[class|="f"] > :is(video, table, pre, .example) {
   margin: 0 auto;
 }

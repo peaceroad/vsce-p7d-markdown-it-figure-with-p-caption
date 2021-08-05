@@ -2,17 +2,32 @@
 
 For a paragraph with one only image, a table or a code block, and by writing a caption paragraph immediately before or after, they are converted into the figure element with the figcaption element.
 
-Code. Sample Markdown
+1. Add width and height attributes in img elements.
+2. Check that the element: one image only paragraph, table, code block, samp block ,and video.
+3. Check if this element has a caption paragraph immediately before or after it.
+4. If It has the caption paragraph, convert them to figure and figcaption element.
+5. If It is samp block, convert `<code>` to `<samp>`.
+
+Code. Input Markdown
 
 ```md
+A paragraph.
+
+![Cat](cat.jpg)
+
+A paragraph.
+
 Figure 1. VSCode with this plugin
 
 ![Figure](docs/screenshot.jpg)
 ```
 
-CODE H: Sample HTML
+Code: Output HTML
 
 ```html
+<p>A paragraph.</p>
+<p><img src="cat.jpg" alt="Cat" with="400" height="300"></p>
+<p>A paragraph.</p>
 <figure class="f-img">
 <figcaption><span class="f-img-label">Figure<span class="f-img-label-joint">.</span></span> VSCode with this plugin</figcaption>
 <img src="docs/screenshot.jpg" alt="Figure" width="1407" height="906">
@@ -25,9 +40,7 @@ Figure. VSCode with this plugin
 
 ## Caption Paragraph's rule
 
-It determines if it is a caption from the string at the beginning of the paragraph[^caption].
-
-[^caption]: [Caption paragraph's more information.](https://github.com/peaceroad/p7d-markdown-it-p-captions)
+It determines if it is a caption from the string at the beginning of the paragraph ([more info](https://github.com/peaceroad/p7d-markdown-it-p-captions)).
 
 Table. The beginning string identified as a caption.
 
@@ -104,3 +117,20 @@ Based on the string at the end of the image file name, adjust the width and heig
 
 This is identified by `/[@._-]([0-9]+)(x|dpi|ppi)$/`.
 
+## Adjust inline image size.
+
+Since the width and height attributes are set for img elements, it is possible that the image may become large in a normal paragraph. Therefore, by simply specifying the following alt attribute, you can adjust with the CSS that comes standard with this extension.
+
+```css
+.vscode-body img:is([alt=" "], [alt="i"], [alt="inline"], [alt^="i:"], [alt^="inline:"]) {
+  max-block-size: 1.5em;
+  inline-size: auto;
+  vertical-align: middle;
+}
+```
+
+---
+
+Notice. This extension has [default CSS](https://github.com/peaceroad/vsce-p7d-markdown-it-figure-with-p-caption/blob/main/style/figure-with-p-caption.css). This CSS can be disabled with a user option.
+
+---

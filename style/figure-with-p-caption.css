@@ -36,11 +36,11 @@
   display: block;
   margin: 0 auto;
 }
-.vscode-body p > img[alt=" "] {
+.vscode-body img:is([alt=" "], [alt="i"], [alt="inline"], [alt^="i:"], [alt^="inline:"]) {
   max-block-size: 1.5em;
+  inline-size: auto;
   vertical-align: middle;
 }
-
 .vscode-body figure[class|="f"] > :is(video, table, pre, .example) {
   margin: 0 auto;
 }

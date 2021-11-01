@@ -56,6 +56,11 @@
   border-block-end: 1px solid currentcolor;
   border-inline-end: 1px solid currentcolor;
 }
+.vscode-body figure[class|="f"] > table thead tr th {
+  border-block-end: 3px double currentcolor;
+  text-align: center;
+}
+
 .vscode-body figure[class|="f"] > pre > :is(code, samp) {
   display: block;
   font-family: var(--vscode-editor-font-family), monospace;
@@ -63,4 +68,11 @@
   line-height: 1.55;
   word-break: break-all;
   white-space: break-spaces;
+}
+.vscode-body figure.f-blockquote figcaption {
+  inline-size: calc(100% - 2em);
+  margin: 0 1em;
+}
+.vscode-body figure.f-blockquote blockquote + figcaption {
+  text-align: end;
 }

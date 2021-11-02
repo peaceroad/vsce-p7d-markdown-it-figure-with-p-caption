@@ -32,11 +32,11 @@
   block-size: auto;
   aspect-ratio: attr(width)/attr(height);
 }
-.vscode-body figure[class|="f"] > img {
+.vscode-body figure.f-img > img {
   display: block;
   margin: 0 auto;
 }
-.vscode-body img:is([alt=" "], [alt="i"], [alt="inline"], [alt^="i:"], [alt^="inline:"]) {
+.vscode-body img:is([title^="文中画像"], [title^="インライン画像"], [title^="inline image" i]) {
   inline-size: auto;
   block-size: auto;
   max-block-size: 1.5em;
@@ -45,22 +45,21 @@
 .vscode-body figure[class|="f"] > :is(video, table, pre, .example) {
   margin: 0 auto;
 }
-.vscode-body figure[class|="f"] > table {
+.vscode-body figure.f-table > table {
   border-block-start: 1px solid currentcolor;
   border-inline-start: 1px solid currentcolor;
 }
-.vscode-body figure[class|="f"] > table :is(th, td) {
+.vscode-body figure.f-table > table :is(th, td) {
   font-size: 0.95em;
   line-height: 1.55;
   padding: 0.5em 1.5em;
   border-block-end: 1px solid currentcolor;
   border-inline-end: 1px solid currentcolor;
 }
-.vscode-body figure[class|="f"] > table thead tr th {
+.vscode-body figure.f-table > table thead th {
   border-block-end: 3px double currentcolor;
   text-align: center;
 }
-
 .vscode-body figure[class|="f"] > pre > :is(code, samp) {
   display: block;
   font-family: var(--vscode-editor-font-family), monospace;

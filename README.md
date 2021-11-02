@@ -1,6 +1,6 @@
 # vsce-p7d-markdown-it-figure-with-p-caption README
 
-For a paragraph with one only image, a table or a code block, and by writing a caption paragraph immediately before or after, they are converted into the figure element with the figcaption element.
+For a paragraph with one only image, a table or a code block　or a blockquote, and by writing a caption paragraph immediately before or after, they are converted into the figure element with the figcaption element.
 
 1. Add width and height attributes in img elements.
 2. Check that the element: one image only paragraph, table, code block, samp block ,and video.
@@ -119,10 +119,10 @@ This is identified by `/[@._-]([0-9]+)(x|dpi|ppi)$/`.
 
 ## Adjust inline image size.
 
-Since the width and height attributes are set for img elements, it is possible that the image may become large in a normal paragraph. Therefore, by simply specifying the following alt attribute, you can adjust with the CSS that comes standard with this extension.
+Since the width and height attributes are set for img elements, it is possible that the image may become large in a normal paragraph. Therefore, by simply specifying the following title attribute, you can adjust with the CSS that comes standard with this extension.
 
 ```css
-.vscode-body img:is([alt=" "], [alt="i"], [alt="inline"], [alt^="i:"], [alt^="inline:"]) {
+.vscode-body img:is([title^="文中画像"], [title^="インライン画像"], [title^="inline image" i]) {
   inline-size: auto;
   block-size: auto;
   max-block-size: 1.5em;

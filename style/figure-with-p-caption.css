@@ -27,20 +27,20 @@
 .vscode-body figure[class|="f"] figcaption span[class$="joint"] {
   font-weight: normal;
 }
-.vscode-body img[width] {
+.vscode-body :not(figure) > img[width] {
+  inline-size: auto;
   max-inline-size: 100%;
   block-size: auto;
   aspect-ratio: attr(width)/attr(height);
-}
-.vscode-body figure.f-img > img {
-  display: block;
-  margin: 0 auto;
-}
-.vscode-body img:is([title^="文中画像"], [title^="インライン画像"], [title^="inline image" i]) {
-  inline-size: auto;
-  block-size: auto;
   max-block-size: 1.5em;
   vertical-align: middle;
+}
+.vscode-body figure.f-img > img[width] {
+  display: block;
+  margin: 0 auto;
+  max-inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: attr(width)/attr(height);
 }
 .vscode-body figure[class|="f"] > :is(video, table, pre, .example) {
   margin: 0 auto;

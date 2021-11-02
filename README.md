@@ -117,19 +117,6 @@ Based on the string at the end of the image file name, adjust the width and heig
 
 This is identified by `/[@._-]([0-9]+)(x|dpi|ppi)$/`.
 
-## Adjust inline image size.
-
-Since the width and height attributes are set for img elements, it is possible that the image may become large in a normal paragraph. Therefore, by simply specifying the following title attribute, you can adjust with the CSS that comes standard with this extension.
-
-```css
-.vscode-body img:is([title^="文中画像"], [title^="インライン画像"], [title^="inline image" i]) {
-  inline-size: auto;
-  block-size: auto;
-  max-block-size: 1.5em;
-  vertical-align: middle;
-}
-```
-
 ---
 
 Notice. This extension has [default CSS](https://github.com/peaceroad/vsce-p7d-markdown-it-figure-with-p-caption/blob/main/style/figure-with-p-caption.css). This CSS can be disabled with a user option.

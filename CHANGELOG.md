@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.2.2 - 2021/11/02
+
+- Fix because the public package wasn't working. (Modify the configuration properties setting in package.json, and modify extensions.js about it ).
+
 ## 0.2.1 - 2021/11/02
 
 - Delete inline image max-height set flag.

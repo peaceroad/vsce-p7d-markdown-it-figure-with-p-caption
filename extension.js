@@ -6,6 +6,7 @@ const mdRendererImage = require('@peaceroad/markdown-it-renderer-image');
 const workspace = require('vscode').workspace;
 const window = require('vscode').window;
 const fs = require('fs');
+let disableStyle = false;
 
 async function activate() {
 
@@ -16,28 +17,22 @@ async function activate() {
     return;
   }
 
-  function updateCss (cssFilePath, cachedCssFilePath) {
-    if (workspace.getConfiguration('p7dMarkdownItFigureWithCaption').get('disableStyle')) {
-      cacheCssFile(cssFilePath, cachedCssFilePath);
-      fs.writeFileSync(cssFilePath, '');
-    } else {
-      cacheCssFile(cssFilePath, cachedCssFilePath);
-      fs.writeFileSync(cssFilePath, fs.readFileSync(cachedCssFilePath));
-    }
-    return;
-  }
-
   const cssFile = 'figure-with-p-caption.css';
   const cssFilePath = __dirname + '/style/' + cssFile;
   const cachedCssFilePath = __dirname + '/style/_' + cssFile;
 
   workspace.onDidChangeConfiguration(event => {
-    const cs = event.affectsConfiguration('p7dMarkdownItFigureWithPCaption');
-    if (cs.get('disableStyle')) {
-      updateCss(cssFilePath, cachedCssFilePath);
+    if (event.affectsConfiguration('p7dMarkdownItFigureWithPCaption.disableStyle')) {
+      disableStyle = workspace.getConfiguration('p7dMarkdownItFigureWithPCaption').get('disableStyle');
+      if (disableStyle) {
+        cacheCssFile(cssFilePath, cachedCssFilePath);
+        fs.writeFileSync(cssFilePath, '');
+      } else {
+        cacheCssFile(cssFilePath, cachedCssFilePath);
+        fs.writeFileSync(cssFilePath, fs.readFileSync(cachedCssFilePath));
+      }
     }
   });
-
 
   let mdPath = window.activeTextEditor.document.uri.fsPath;
 

@@ -6,7 +6,7 @@
   "repository": {
     "url": "https://github.com/peaceroad/vsce-p7d-markdown-it-figure-with-p-caption"
   },
-  "version": "0.2.1",
+  "version": "0.2.2",
   "engines": {
     "vscode": "^1.57.0"
   },
@@ -29,7 +29,7 @@
       "type": "object",
       "title": "p7d-markdown-it-figure-with-p-caption",
       "properties": {
-        "p7dMarkdownItFigureWithPCaption": {
+        "p7dMarkdownItFigureWithPCaption.disableStyle": {
           "type": "boolean",
           "default": false,
           "description": "Disable the default CSS of p7d-markdown-it-figure-with-p-caption."

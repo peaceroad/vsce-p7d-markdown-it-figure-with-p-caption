@@ -40,6 +40,6 @@
   "main": "./extension.js",
   "dependencies": {
     "@peaceroad/markdown-it-figure-with-p-caption": "^0.3.0",
-    "@peaceroad/markdown-it-renderer-image": "^0.1.4"
+    "@peaceroad/markdown-it-renderer-image": "^0.1.5"
   }
 }

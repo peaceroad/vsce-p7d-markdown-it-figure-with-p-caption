@@ -50,6 +50,7 @@ Table. The beginning string identified as a caption.
 | `table` | table, 表 |
 | `pre-code` | code, codeblock, program, algorithm, コード, ソースコード, 命令, プログラム, 算譜, アルゴリズム, 算法 |
 | `pre-samp` | console, terminal, prompt, command, 端末, ターミナル, コマンド, コマンドプロンプト, プロンプト |
+| `blockquote` | quote, blockquote, 引用, 引用元, 出典 |
 
 In addition, a delimiter is required after these strings, and then one space is needed. If the character string is Japanese, half-width spaces only are allowed.
 
@@ -96,10 +97,9 @@ Also, It identifies the `Figure.1` type. This format has a dot immediately after
 ```md
 Figure.1 A caption.
 ```
+## Adjusting image size by filename suffix
 
-## Adjust image size by filename suffix
-
-Based on the string at the end of the image file name, adjust the width and height as follows.
+Based on the string at the end of the image file name, the image adjust the width and height as follows.
 
 ```plain
 ![A cat.](cat@2x.jpg) //400x300.
@@ -116,6 +116,43 @@ Based on the string at the end of the image file name, adjust the width and heig
 ```
 
 This is identified by `/[@._-]([0-9]+)(x|dpi|ppi)$/`.
+
+
+### Resizing layout image by title attribute
+
+A image can resize based on the value of the title attribute.
+
+```js
+![A cat.](cat.jpg "Resize:50%")
+↓
+<p><img src="cat.jpg" alt="A cat." width="200" height="150"></p>
+
+![A cat.](cat.jpg "リサイズ：50%")
+↓
+<p><img src="cat.jpg" alt="A cat." width="200" height="150"></p>
+
+![A cat.](cat.jpg "サイズ変更：50%")
+↓
+<p><img src="cat.jpg" alt="A cat." width="200" height="150"></p>
+
+![A cat.](cat.jpg "The shown photo have been resized to 50%.")
+↓
+<p><img src="cat.jpg" alt="A cat." title="The shown photo have been resized to 50%." width="200" height="150"></p>
+
+![Figure](cat.jpg "resize:320px")
+↓
+<p><img src="cat.jpg" alt="Figure" title="resize:320px" width="320" height="240"></p>
+
+![Figure](cat@2x.jpg "resize:320px")
+↓
+<p><img src="cat@2x.jpg" alt="Figure" title="resize:320px" width="320" height="240"></p>
+```
+
+This is identified by `imageTitleAttribute.match(/(?:(?:(?:大きさ|サイズ)の?変更|リサイズ|resize(?:d to)?)? *[:：]? *([0-9]+)([%％]|px)|([0-9]+)([%％]|px)に(?:(?:大きさ|サイズ)を?変更|リサイズ))/i)`
+
+If `px` is specified, the numerical value is treated as the width after resizing.
+
+Notice: Other Markdown extended notations may specify a caption in the title attribute. Therefore, think carefully about whether to enable this option.
 
 ---
 

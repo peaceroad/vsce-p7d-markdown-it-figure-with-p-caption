@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.2.3 - 2021/11/07
+
+- Fixed an issue where it would not be active. (It was not resolved in 2.2.
+There was extra code in @peaceroad/markdown-it-renderer-image@0.1.4. Update: 0.1.5.)
+- Add option: resize.
+
 ## 0.2.2 - 2021/11/02
 
 - Fix because the public package wasn't working. (Modify the configuration properties setting in package.json, and modify extensions.js about it ).

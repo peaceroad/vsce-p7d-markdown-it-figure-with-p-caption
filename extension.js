@@ -34,14 +34,13 @@ async function activate() {
     }
   });
 
-  let mdPath = window.activeTextEditor.document.uri.fsPath;
-
   return {
     extendMarkdownIt(md) {
-      md.use(mdFigureWithPCaption).use(mdRendererImage, {
-        'scaleSuffix': true,
-        'mdPath': mdPath,
-      });
+      md.use(mdRendererImage, {
+        scaleSuffix: true,
+        resize: true,
+        mdPath: window.activeTextEditor.document.uri.fsPath,
+      }).use(mdFigureWithPCaption);
       return md;
     }
   };

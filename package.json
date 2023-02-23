@@ -6,7 +6,7 @@
   "repository": {
     "url": "https://github.com/peaceroad/vsce-p7d-markdown-it-figure-with-p-caption"
   },
-  "version": "0.2.3",
+  "version": "0.3.0",
   "engines": {
     "vscode": "^1.57.0"
   },
@@ -39,7 +39,7 @@
   },
   "main": "./extension.js",
   "dependencies": {
-    "@peaceroad/markdown-it-figure-with-p-caption": "^0.3.0",
-    "@peaceroad/markdown-it-renderer-image": "^0.1.5"
+    "@peaceroad/markdown-it-figure-with-p-caption": "^0.4.5",
+    "@peaceroad/markdown-it-renderer-image": "^0.1.9"
   }
 }

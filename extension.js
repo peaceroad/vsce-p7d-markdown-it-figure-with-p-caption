@@ -4,6 +4,7 @@ const mdFigureWithPCaption = require('@peaceroad/markdown-it-figure-with-p-capti
 const mdRendererImage = require('@peaceroad/markdown-it-renderer-image');
 
 const workspace = require('vscode').workspace;
+const commands = require('vscode').commands;
 const window = require('vscode').window;
 const fs = require('fs');
 let disableStyle = false;
@@ -31,6 +32,7 @@ async function activate() {
         cacheCssFile(cssFilePath, cachedCssFilePath);
         fs.writeFileSync(cssFilePath, fs.readFileSync(cachedCssFilePath));
       }
+      commands.executeCommand('workbench.action.reloadWindow')
     }
   });
 
@@ -39,8 +41,20 @@ async function activate() {
       md.use(mdRendererImage, {
         scaleSuffix: true,
         resize: true,
+        lazyLoad: false,
+        asyncDecode: false,
         mdPath: window.activeTextEditor.document.uri.fsPath,
-      }).use(mdFigureWithPCaption);
+      }).use(mdFigureWithPCaption, {
+        strongFilename: true,
+        dquoteFilename: true,
+        oneImageWithoutCaption: true,
+        bLabel: false,
+        strongLabel: false,
+        jointSpaceUseHalfWidth: true,
+        hasNumClass: false,
+        iframeWithoutCaption: true,
+        removeUnnumberedLabel: true,
+      });
       return md;
     }
   };

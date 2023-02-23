@@ -42,8 +42,11 @@
   block-size: auto;
   aspect-ratio: attr(width)/attr(height);
 }
-.vscode-body figure[class|="f"] > :is(video, table, pre, .example) {
+.vscode-body figure[class|="f"] > :is(video, table, pre, iframe) {
   margin: 0 auto;
+}
+.vscode-body iframe {
+  display: block;
 }
 .vscode-body figure.f-table > table {
   border-block-start: 1px solid currentcolor;

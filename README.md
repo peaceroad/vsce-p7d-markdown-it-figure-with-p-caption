@@ -6,14 +6,24 @@ For a paragraph with one only image, a table or a code block　or a blockquote, 
 2. Check that the element: one image only paragraph, table, code block, samp block ,and video.
 3. Check if this element has a caption paragraph immediately before or after it.
 4. If It has the caption paragraph, convert them to figure and figcaption element.
+   - At this time, if caption label do not has label number, the label itself is deleted. (in the settings of this extension)
 5. If It is samp block, convert `<code>` to `<samp>`.
+
+Exceptional handling.
+
+- If there is only one image per paragraph, treat it as a figure and enclose it in the figure element. (in the settings of this extension)
+- A iframe element (ex. YouTube) row with no caption is wrapped in figure element.
+- Twitter blockquote element, Mastodon iframe element are wrapped in figure element.
+- 
+
+For example, the following code is Markdown for input and HTML for output (vscode markdown viewer).
 
 Code. Input Markdown
 
 ```md
 A paragraph.
 
-![Cat](cat.jpg)
+![Figure](docs/screenshot.jpg)
 
 A paragraph.
 
@@ -26,7 +36,9 @@ Code: Output HTML
 
 ```html
 <p>A paragraph.</p>
-<p><img src="cat.jpg" alt="Cat" with="400" height="300"></p>
+<figure class="f-img">
+<img src="docs/screenshot.jpg" alt="Figure" width="1407" height="906">
+</figure>
 <p>A paragraph.</p>
 <figure class="f-img">
 <figcaption><span class="f-img-label">Figure<span class="f-img-label-joint">.</span></span> VSCode with this plugin</figcaption>
@@ -36,7 +48,28 @@ Code: Output HTML
 
 ![Figure](docs/screenshot.jpg)
 
-Figure. VSCode with this plugin
+Figure 1. VSCode with this plugin
+
+The following markdown is converted to the following HTML (in the settings of this extension):
+
+```md
+Figure. A caption.
+
+![](fig1.jpg)
+```
+
+```html
+<figure class="f-img">
+<figcaption>VSCode with this plugin</figcaption>
+<img src="docs/screenshot.jpg" alt="Figure" width="1407" height="906">
+</figure>
+```
+
+Also, full-width spaces used as label joints are converted to half-width spaces on output. Therefore, even on the preview, it can be seen as a half-width space. (in the settings of this extension)
+
+## Use
+
+To use this extension, reload VSCode once after installing this extension.
 
 ## Caption Paragraph's rule
 
@@ -48,11 +81,11 @@ Table. The beginning string identified as a caption.
 | ---- | ---- |
 | `img` | fig, figure, illust, photo, 図, イラスト, 写真 |
 | `table` | table, 表 |
-| `pre-code` | code, codeblock, program, algorithm, コード, ソースコード, 命令, プログラム, 算譜, アルゴリズム, 算法 |
+| `pre-code` | code, codeblock, program, algorithm, コード, ソースコード, リスト, 命令, プログラム, 算譜, アルゴリズム, 算法 |
 | `pre-samp` | console, terminal, prompt, command, 端末, ターミナル, コマンド, コマンドプロンプト, プロンプト |
 | `blockquote` | quote, blockquote, 引用, 引用元, 出典 |
 
-In addition, a delimiter is required after these strings, and then one space is needed. If the character string is Japanese, half-width spaces only are allowed.
+In addition, a delimiter is required after these strings, and then one space is needed. If the character string is Japanese, half-width spaces only are allowed. 
 
 ```md
 Fig. A caption

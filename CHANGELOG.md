@@ -1,5 +1,16 @@
 # Change Log
 
+## 0.3.0 - 2023/02/23
+
+Major changes.
+
+- if caption label do not has label number, the label itself is deleted on output.
+- If A paragraph has only one image, the image is wrapped in figure element.
+- A iframe element (ex. YouTube) row with no caption is wrapped in figure element.
+- Twitter blockquote element, Mastodon iframe element are wrapped in figure element.
+
+Note. 57
+
 ## 0.2.3 - 2021/11/07
 
 - Fixed an issue where it would not be active. (It was not resolved in 2.2.

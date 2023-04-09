@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.3.1 - 2023/04/09
+
+- Update: p7d-markdown-it-p-captions@0.9.1.
+    - Add word: 'source' for blockquote. As a word that specifies the caption (quotation source).
+- Fix handling of wraps class in twitter embed element.
+        Twitter embed element uses blockquote, but is actually converted to an iframe by the included script. Therefore, here, the class of the wrapped figure element is set to `f-iframe`.
+- Fix. Use f-video for a figure element that wraps a Vimeo iframe element (same as YouTube). However, Vimeo's embed elements comes with the p element, but it is kept in mind to exclude it.
+
 ## 0.3.0 - 2023/02/23
 
 Major changes.

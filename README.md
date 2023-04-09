@@ -83,7 +83,7 @@ Table. The beginning string identified as a caption.
 | `table` | table, 表 |
 | `pre-code` | code, codeblock, program, algorithm, コード, ソースコード, リスト, 命令, プログラム, 算譜, アルゴリズム, 算法 |
 | `pre-samp` | console, terminal, prompt, command, 端末, ターミナル, コマンド, コマンドプロンプト, プロンプト |
-| `blockquote` | quote, blockquote, 引用, 引用元, 出典 |
+| `blockquote` | source, quote, blockquote, 引用, 引用元, 出典 |
 
 In addition, a delimiter is required after these strings, and then one space is needed. If the character string is Japanese, half-width spaces only are allowed. 
 

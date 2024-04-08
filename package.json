@@ -1,12 +1,12 @@
 {
   "name": "p7d-markdown-it-figure-with-p-caption",
   "displayName": "p7d-markdown-it-figure-with-p-caption",
-  "description": "convert into the figure element with the figcaption element, for a paragraph with one only image, a table or a code block or a blockquote, and by writing a caption paragraph immediately before or after.",
+  "description": "convert into the figure element with the figcaption element, for a paragraph with only images, or a table or a code block or a blockquote, and by writing a caption paragraph immediately before or after.",
   "publisher": "peaceroad",
   "repository": {
     "url": "https://github.com/peaceroad/vsce-p7d-markdown-it-figure-with-p-caption"
   },
-  "version": "0.3.1",
+  "version": "0.4.0",
   "engines": {
     "vscode": "^1.57.0"
   },
@@ -33,13 +33,54 @@
           "type": "boolean",
           "default": false,
           "description": "Disable the default CSS of p7d-markdown-it-figure-with-p-caption."
+        },
+        "p7dMarkdownItFigureWithPCaption.displayUnnumberedLabelMarks": {
+          "type": "array",
+          "default": ["blockquote"],
+          "description": "Display marks caption's unnumbered label. Ex. img, table, video, pre-code, pre-samp."
+        },
+        "p7dMarkdownItFigureWithPCaption.displayUnnumberedLabel": {
+          "type": "boolean",
+          "default": false,
+          "description": "Display all caption's unnumbered label. Overrides option: displayUnnumberedLabelMarks."
+        },
+        "p7dMarkdownItFigureWithPCaption.setDoubleQuoteFileName": {
+          "type": "boolean",
+          "default": false,
+          "description": "Set Filename: Caption. \"Filename\" A text."
+        },
+        "p7dMarkdownItFigureWithPCaption.setDoubleAsteriskFileName": {
+          "type": "boolean",
+          "default": false,
+          "description": "Set Filename: Caption. **Filename** A text."
+        },
+        "p7dMarkdownItFigureWithPCaption.convertJointSpaceToHalfWidth": {
+          "type": "boolean",
+          "default": false,
+          "description": "Convert full-width space to half-width space in label joint."
+        },
+        "p7dMarkdownItFigureWithPCaption.notSetImageElementAttributes": {
+          "type": "boolean",
+          "default": false,
+          "description": "Not set width, height, lazyload attributes of image element."
+        },
+        "p7dMarkdownItFigureWithPCaption.wrapIframeWithoutCaptionByFigure": {
+          "type": "boolean",
+          "default": false,
+          "description": "Wrap iframe elemet without a caption by figure element."
+        },
+        "p7dMarkdownItFigureWithPCaption.wrapVideoWithoutCaptionByFigure": {
+          "type": "boolean",
+          "default": false,
+          "description": "Wrap video elemet without a caption by figure element."
         }
+
       }
     }
   },
   "main": "./extension.js",
   "dependencies": {
-    "@peaceroad/markdown-it-figure-with-p-caption": "^0.4.6",
+    "@peaceroad/markdown-it-figure-with-p-caption": "^0.5.3",
     "@peaceroad/markdown-it-renderer-image": "^0.1.9"
   }
 }

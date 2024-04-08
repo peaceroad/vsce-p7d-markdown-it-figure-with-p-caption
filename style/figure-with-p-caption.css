@@ -1,5 +1,3 @@
-@charset "UTF-8";
-
 .vscode-body figure[class|="f"] {
   margin: 1.5em 0 0;
 }
@@ -22,7 +20,7 @@
 }
 .vscode-body figure[class|="f"] figcaption span[class$="label"] {
   font-weight: bold;
-  margin-inline-end: 0.5em;
+  /* margin-inline-end: 0.5em; */
 }
 .vscode-body figure[class|="f"] figcaption span[class$="joint"] {
   font-weight: normal;

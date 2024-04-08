@@ -1,5 +1,19 @@
 # Change Log
 
+## 0.4.0 - 2024/04/08
+
+- Update: p7d-markdown-it-p-captions@0.12.0.
+    - Support multiple images only paragraph.
+    - Add word: 'slide' for slide.
+- Fixed the style not working when there is a style at the end of the image paragraph and a caption follows it. (using 'markdown-it-attrs')
+- By default, video elements and iframe elements without captions are not wrapped in figure elements (opposite to previous versions).
+- Support Option: See Readme for details.
+   - Not Convert: Label joint Full-width Space is convert to half-width space (Previously Default setting). In addition, I had set a margin of 0.5em on the right side of the label, but decided not to do so.
+- Adjusted CSS slightly.
+- Add many examples to Readme.
+
+Note: 128.
+
 ## 0.3.1 - 2023/04/09
 
 - Update: p7d-markdown-it-p-captions@0.9.1.

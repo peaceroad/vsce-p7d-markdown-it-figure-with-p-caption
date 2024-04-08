@@ -7,13 +7,15 @@ For a paragraph with a image/images only, or a table or a code block or a blockq
 The process is as follows.
 
 1. Add width and height attributes, and loading="lazy" in img elements.
-    - You can skip attribute processing of img elements with Option.
-2. Check that the element: image only paragraph, table, code block, samp block ,and video, iframe.
+    - You can skip attribute processing of img elements with option.
+2. Check that the element: an image/images only paragraph, a table, a code block, a samp block ,and a video, a iframe.
 3. Check if this element has a caption paragraph immediately before or after it.
-    - Even if there is no caption, if it is an image-only paragraph (and video/iframe element depending on the option), proceed to the next step.
+    - Even if there is no caption, if it is image only paragraph (and video/iframe element depending on the option), proceed to the next step.
+    - At this point, a class attribute is attached to the determined caption and its label.
+         - if caption label do not has label number, the label itself is deleted. (Except in case of blockquote caption label. This is default setting.)  
+         This default label deletion process also occurs at the beginning of a normal paragraph. But if it's a general document, this shouldn't be a problem.
 4. If It has the caption paragraph, convert them to figure and figcaption element.
-    - At this time, if caption label do not has label number, the label itself is deleted. (Except in case of blockquote caption label. This is default setting.)
-         - Warning. This default label deletion process also occurs at the beginning of a normal paragraph. I don't think this is the case with general documents, but please be careful.
+    - The class attribute etc. is attached to the figure element according to the caption label.
 5. If It is samp block (that is codeblock surrounded by ```` ```smap```` ~ ```` ``` ````), convert `<code>` to `<samp>`.
 
 ## Use
@@ -35,7 +37,7 @@ Table. The beginning string identified as a caption.
 | `blockquote` | source, quote, blockquote, 引用, 引用元, 出典 |
 | `slide` | slide, スライド |
 
-In addition, a delimiter is required after these strings, and then one space is needed. If the character string is Japanese, half-width spaces only are allowed.
+In addition, a delimiter is required after these strings, and then one space is needed. If the delimiter string is a full-width character, half-width spaces only are allowed.
 
 ```md
 Fig. A caption
@@ -84,6 +86,21 @@ Figure.1 A caption.
 ## Example
 
 For example, the following code is Markdown for input and HTML for output (vscode markdown viewer).
+
+### Label only example
+
+Currently, even if there is only a caption, it affects the preview and HTML output.
+
+```md
+Figure 1. A caption.
+
+Figure. A caption.
+```
+
+```html
+<p class="f-img"><span class="f-img-label">Figure 1<span class="f-img-label-joint">.</span></span> A caption.</p>
+<p class="f-img">A caption.</p>
+```
 
 ### Image example
 
@@ -479,19 +496,19 @@ If you do not want to modify img element attributes, enable option: `p7dMarkdown
 
 Based on the string at the end of the image file name, a image adjust the width and height as follows.
 
-```plain
+```md
 //image original size: 400x300.
 
 ![A cat.](cat@2x.jpg)
-<p><img src="cat@2x.jpg" alt="A cat." width="200" height="150"></p>
+<p><img src="cat@2x.jpg" alt="A cat." loading="lazy" width="200" height="150"></p>
 
 ![A cat.](cat_300dpi.jpg)
 ↓
-<p><img src="cat_300dpi.jpg" alt="A cat." width="128" height="96"></p>
+<p><img src="cat_300dpi.jpg" alt="A cat." loading="lazy" width="128" height="96"></p>
 
 ![A cat.](cat_300ppi.jpg)
 ↓
-<p><img src="cat_300ppi.jpg" alt="A cat." width="128" height="96"></p>
+<p><img src="cat_300ppi.jpg" alt="A cat." loading="lazy"  width="128" height="96"></p>
 ```
 
 This is identified by `/[@._-]([0-9]+)(x|dpi|ppi)$/`.
@@ -500,7 +517,7 @@ This is identified by `/[@._-]([0-9]+)(x|dpi|ppi)$/`.
 
 A image resize based on the value of the title attribute.
 
-```js
+```md
 //image original size: 400x300.
 
 ![A cat.](cat.jpg "Resize:50%")

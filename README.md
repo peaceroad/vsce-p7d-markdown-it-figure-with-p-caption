@@ -89,7 +89,7 @@ For example, the following code is Markdown for input and HTML for output (vscod
 
 ### Label only example
 
-Currently, even if there is only a caption, it affects the preview and HTML output.
+Currently, even if there is only a caption paragraph, it affects the preview and HTML output.
 
 ```md
 Figure 1. A caption.
@@ -200,7 +200,7 @@ A paragraph  ![](.docs/cat.jpg) A paragraph.
 <p>A paragraph <img src="./docs/cat.jpg" alt="A cat." loading="lazy" width="400" height="300">  A paragraph.</p>
 ```
 
-Noitce. `p7dMarkdownItFigureWithPCaption.notSetImageElementAttributes`: Not set width, height, lazyload attributes of image element.
+Noitce. `p7dMarkdownItFigureWithPCaption.notSetImageElementAttributes`: Not set width, height, loading attributes of image element.
 
 #### Multiple image example
 

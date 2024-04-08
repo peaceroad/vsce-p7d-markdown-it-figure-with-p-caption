@@ -1,6 +1,6 @@
 # Change Log
 
-## 0.4.0 - 2024/04/08
+## 0.4.0 - 2024/04/09
 
 - Update: p7d-markdown-it-p-captions@0.12.0.
     - Support multiple images only paragraph.

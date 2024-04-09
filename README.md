@@ -212,9 +212,6 @@ For multiple images, the following class name is used instead of `f-img`.
 
 Note that half-width spaces between images are removed.
 
-horizontal images only:  
-// CSS example: https://codepen.io/peaceroad/pen/gOyxqzp
-
 ```md
 ![One cat](./cat1.jpg) ![Two cat](./cat2.jpg)
 ```

@@ -1,16 +1,22 @@
+/* Common */
 .vscode-body figure[class|="f"] {
-  margin: 1.5em 0 0;
+  display: flex;
+  flex-direction: column;
+  /* inline-size: min-content; */
+  align-items: center;
+  max-inline-size: 100%;
+  margin-block-start: 1.5em;
+  margin-inline: auto;
 }
 .vscode-body figure[class|="f"] + * {
   margin-block-start: 1.5em;
 }
 .vscode-body figure[class|="f"] figcaption {
-  display: table;
   inline-size: fit-content;
+  text-align: justify;
+  text-align-last: start;
   font-size: 0.95em;
   line-height: 1.55;
-  margin-inline-start: auto;
-  margin-inline-end: auto;
 }
 .vscode-body figure[class|="f"] figcaption:first-child {
   margin-block-end: 0.5em;
@@ -18,13 +24,15 @@
 .vscode-body figure[class|="f"] figcaption:last-child {
   margin-block-start: 0.5em;
 }
-.vscode-body figure[class|="f"] figcaption span[class$="label"] {
+.vscode-body figure[class|="f"] figcaption span:first-child[class$="label"] {
   font-weight: bold;
   /* margin-inline-end: 0.5em; */
 }
-.vscode-body figure[class|="f"] figcaption span[class$="joint"] {
+.vscode-body figure[class|="f"] figcaption span:first-child[class$="label"] span[class$="joint"] {
   font-weight: normal;
 }
+
+/* Image */
 .vscode-body :not(figure) > img[width] {
   inline-size: auto;
   max-inline-size: 100%;
@@ -33,46 +41,84 @@
   max-block-size: 1.5em;
   vertical-align: middle;
 }
-.vscode-body figure.f-img > img[width] {
+.vscode-body figure[class|="f-img"] > img {
   display: block;
-  margin: 0 auto;
+  /* max-inline-size: max-content ; */
   max-inline-size: 100%;
   block-size: auto;
   aspect-ratio: attr(width)/attr(height);
 }
-.vscode-body figure[class|="f"] > :is(video, table, pre, iframe) {
-  margin: 0 auto;
+
+.vscode-body figure.f-img-horizontal,
+.vscode-body figure.f-mulitiple {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  flex-direction: row;
+  max-inline-size: 100%;
 }
-.vscode-body iframe {
+.vscode-body figure.f-img-horizontal figcaption,
+.vscode-body figure.f-mulitiple figcaption {
   display: block;
+  flex-basis: 100%;
+  text-align: center;
+  text-align-last: start;
 }
-.vscode-body figure.f-table > table {
-  border-block-start: 1px solid currentcolor;
-  border-inline-start: 1px solid currentcolor;
+.vscode-body figure.f-img-horizontal > img {
+  width: 25px;
+  height: auto;
+  flex: 1;
+  margin-inline-end: 10px;
 }
+.vscode-body figure.f-img-horizontal > img:last-child {
+  margin-inline-end: 0;
+}
+.vscode-body figure.f-img-vertical {
+  display: flex;
+  flex-direction: column;
+}
+.vscode-body figure.f-img-vertical > img {
+  display: block;
+  margin-block-end: 10px;
+}
+.vscode-body figure.f-img-vertical > img:last-child {
+  margin-block-end: 0;
+}
+
+/* Table */
 .vscode-body figure.f-table > table :is(th, td) {
   font-size: 0.95em;
   line-height: 1.55;
-  padding: 0.5em 1.5em;
+  padding: 0.5em 1em;
   border-block-end: 1px solid currentcolor;
-  border-inline-end: 1px solid currentcolor;
 }
 .vscode-body figure.f-table > table thead th {
   border-block-end: 3px double currentcolor;
   text-align: center;
 }
+
+.vscode-body  figure[class|="f-pre"] {
+  align-items: normal;
+}
 .vscode-body figure[class|="f"] > pre > :is(code, samp) {
   display: block;
   font-family: var(--vscode-editor-font-family), monospace;
-  font-size: 0.95em;
-  line-height: 1.55;
   word-break: break-all;
   white-space: break-spaces;
 }
-.vscode-body figure.f-blockquote figcaption {
-  inline-size: calc(100% - 2em);
-  margin: 0 1em;
+.vscode-body figure.f-blockquote {
+  align-items: normal;
+  margin-inline:  1em;
 }
 .vscode-body figure.f-blockquote blockquote + figcaption {
   text-align: end;
+  text-align-last: end;
+  inline-size: inherit;
+}
+
+.vscode-body figure.f-video,
+.vscode-body figure.f-iframe {
+
+}
+iframe {
+  display: block;
 }

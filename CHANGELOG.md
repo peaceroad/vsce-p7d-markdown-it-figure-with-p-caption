@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.4.1 - 2024/04/09
+
+- Re-adjusted the entire CSS.
+   - Add CSS: figure.f-img-horizontal, figure.f-img-vertical
+       - With f-img-horizontal, the image width is determined by dividing the screen width by the image, regardless of the image width (although there is also a margin). Therefore, each image is displayed with the same width.
+
 ## 0.4.0 - 2024/04/09
 
 - Update: p7d-markdown-it-p-captions@0.12.0.

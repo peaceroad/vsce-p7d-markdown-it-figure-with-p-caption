@@ -5,7 +5,7 @@
 Major changes.
 
 - writing extension.js by ESM style. Use esbuild for build
-- Update @peaceroad/markdown-it-p-captions@0.13.0
+- Update @peaceroad/markdown-it-figure-with-p-caption@0.8.1 (@peaceroad/markdown-it-p-captions@0.13.0)
 - Add import @peaceroad/markdown-it-renderer-fence@0.1.1
 - Add import markdown-it-attrs (If it is not imported by another plugin.)
 - Add `shell` and `console` to the language codes to be converted to samp block.

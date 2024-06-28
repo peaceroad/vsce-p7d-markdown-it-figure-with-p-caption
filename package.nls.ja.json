@@ -1,0 +1,5 @@
+{
+  "setFigureCaptionNumber": "Markdownの図のキャプション番号を連番で挿入",
+  "setImgAltAttrToPCaption": "Markdownの画像のalt属性をキャプションの段落に変更",
+  "setImgTitleAttrToPCaption": "Markdownの画像のtitle属性をキャプションの段落に変更"
+}

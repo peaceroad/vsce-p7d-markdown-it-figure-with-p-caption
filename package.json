@@ -6,9 +6,9 @@
   "repository": {
     "url": "https://github.com/peaceroad/vsce-p7d-markdown-it-figure-with-p-caption"
   },
-  "version": "0.4.1",
+  "version": "0.5.0",
   "engines": {
-    "vscode": "^1.57.0"
+    "vscode": "^1.75.0"
   },
   "categories": [
     "Other"
@@ -25,6 +25,20 @@
     "markdown.previewStyles": [
       "./style/figure-with-p-caption.css"
     ],
+    "commands": [
+      {
+        "command": "p7dMarkdownItFigureWithPCaption.setFigureCaptionNumber",
+        "title": "%setFigureCaptionNumber%"
+      },
+      {
+        "command": "p7dMarkdownItFigureWithPCaption.setImgAltAttrToPCaption",
+        "title": "%setImgAltAttrToPCaption%"
+      },
+      {
+        "command": "p7dMarkdownItFigureWithPCaption.setImgTitleAttrToPCaption",
+        "title": "%setImgTitleAttrToPCaption%"
+      }
+    ],
     "configuration": {
       "type": "object",
       "title": "p7d-markdown-it-figure-with-p-caption",
@@ -36,8 +50,8 @@
         },
         "p7dMarkdownItFigureWithPCaption.displayUnnumberedLabelMarks": {
           "type": "array",
-          "default": ["blockquote"],
-          "description": "Display marks caption's unnumbered label. Ex. img, table, video, pre-code, pre-samp."
+          "default": [],
+          "description": "Display marks caption's unnumbered label. Ex. img, table, video, pre-code, pre-samp. By plugin's default, blockquote are enabled."
         },
         "p7dMarkdownItFigureWithPCaption.displayUnnumberedLabel": {
           "type": "boolean",
@@ -69,18 +83,57 @@
           "default": false,
           "description": "Wrap iframe elemet without a caption by figure element."
         },
+        "p7dMarkdownItFigureWithPCaption.wrapIframeTypeBlockquoteWithoutCaptionByFigure": {
+          "type": "boolean",
+          "default": false,
+          "description": "Wrap iframe type blockquote elemet without a caption by figure element."
+        },
+        "p7dMarkdownItFigureWithPCaption.setFigureClassThatWrapsIframeTypeBlockquote": {
+          "type": "string",
+          "default": "",
+          "description": "Specify default class name of figure element that Wrap iframe type blockquote."
+        },
         "p7dMarkdownItFigureWithPCaption.wrapVideoWithoutCaptionByFigure": {
           "type": "boolean",
           "default": false,
           "description": "Wrap video elemet without a caption by figure element."
+        },
+        "p7dMarkdownItFigureWithPCaption.useImgAltCaption": {
+          "type": "string",
+          "default": "",
+          "description": "Use the alt attribute of the img element for the caption. Specify the text of the label. Example: \"Figure\" , \"図\""
+        },
+        "p7dMarkdownItFigureWithPCaption.useImgTitleCaption": {
+          "type": "string",
+          "default": "",
+          "description": "Use the title attribute of the img element for the caption. Specify the text of the label. Example: \"Figure\" , \"図\""
+        },
+        "p7dMarkdownItFigureWithPCaption.useImgAttrToPCaptionLabelLang": {
+          "type": "string",
+          "default": "",
+          "description": "When creating a caption paragraph from image attributes using the setImgAttrToPCaption command, specify the caption label language when the attribute value does not have a label.: \"ja\"(default), \"en\""
+        },
+        "p7dMarkdownItFigureWithPCaption.setRoleDocExample": {
+          "type": "boolean",
+          "default": false,
+          "description": "Set role=\"doc-example\" to figure element that has > pre > :is(code|samp) element."
         }
-
       }
     }
   },
-  "main": "./extension.js",
+  "main": "./dist/extension.js",
+  "scripts": {
+    "build": "node build.js"
+  },
   "dependencies": {
-    "@peaceroad/markdown-it-figure-with-p-caption": "^0.5.3",
-    "@peaceroad/markdown-it-renderer-image": "^0.1.9"
+    "@peaceroad/markdown-imgattr-to-pcaption": "^0.1.0",
+    "@peaceroad/markdown-it-figure-with-p-caption": "^0.8.0",
+    "@peaceroad/markdown-it-renderer-fence": "^0.1.1",
+    "@peaceroad/markdown-it-renderer-image": "^0.2.0",
+    "@peaceroad/markown-figure-num-setting": "^0.1.4",
+    "markdown-it-attrs": "^4.1.6"
+  },
+  "devDependencies": {
+    "esbuild": "^0.21.4"
   }
 }

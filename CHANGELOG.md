@@ -1,5 +1,31 @@
 # Change Log
 
+## 0.5.0 2024/06/28
+
+Major changes.
+
+- writing extension.js by ESM style. Use esbuild for build
+- Update @peaceroad/markdown-it-p-captions@0.13.0
+- Add import @peaceroad/markdown-it-renderer-fence@0.1.1
+- Add import markdown-it-attrs (If it is not imported by another plugin.)
+- Add `shell` and `console` to the language codes to be converted to samp block.
+    - These two keywords set span tags for highlight.
+- Support Code/samp block with line numbers.
+- Fix Iframe type blockquote process.
+- Add commands. But for now, it's a rough conversion.
+    - "setFigureCaptionNumber": Set markdown figure caption number.
+    - "setImgAltAttrToPCaption": Set markdown img alt attribute to caption's paragraph
+    - "setImgTitleAttrToPCaption": Set markdown img title attribute to caption's paragraph.
+        - If you run the same command continuously, things will go wrong.
+        - By setting `lang="en"` in Yaml like frontmatter, when there is no caption label, "Figure" will be used instead of "図".
+- Change `role="doc-example"` of figure:is(.f-pre-code, .f-pre-samp) is no longer granted by default.
+    - If you want to grant the role as before, set the option setRoleDocExample to true.
+- Fix CSS to draw a straight line at the top of a table when the table does not have a header at the top.
+- Add experimental option: imgAltCaption, imgTitleCaption
+    - The alt and title attributes of the img attribute are used as captions.
+
+Notice. 141
+
 ## 0.4.1 - 2024/04/09
 
 - Re-adjusted the entire CSS.

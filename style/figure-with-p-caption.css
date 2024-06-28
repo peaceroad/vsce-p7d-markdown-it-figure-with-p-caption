@@ -2,7 +2,6 @@
 .vscode-body figure[class|="f"] {
   display: flex;
   flex-direction: column;
-  /* inline-size: min-content; */
   align-items: center;
   max-inline-size: 100%;
   margin-block-start: 1.5em;
@@ -85,6 +84,10 @@
 }
 
 /* Table */
+figure.f-table > table {
+  /*   border-collapse: collapse; */
+  border-spacing: 0;
+}
 .vscode-body figure.f-table > table :is(th, td) {
   font-size: 0.95em;
   line-height: 1.55;
@@ -94,6 +97,9 @@
 .vscode-body figure.f-table > table thead th {
   border-block-end: 3px double currentcolor;
   text-align: center;
+}
+figure.f-table > table:not(thead) tr:first-child td {
+  border-block-start: 1px solid currentcolor;
 }
 
 .vscode-body  figure[class|="f-pre"] {
@@ -115,10 +121,26 @@
   inline-size: inherit;
 }
 
-.vscode-body figure.f-video,
-.vscode-body figure.f-iframe {
-
+.vscode-body pre > :is(code, samp) > span.pre-line::before {
+  display: inline-block;
+  content: counter(pre-line-number);
+  width: 2em;
+  text-align: end;
+  margin-inline-end: 0.5em;
+  padding-inline-end: 0.25em;
 }
-iframe {
-  display: block;
+@media (prefers-color-scheme: light) {
+  .vscode-body pre > :is(code, samp) > span.pre-line::before {
+    color: #555;
+    border-inline-end: 1px solid #777;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .vscode-body pre > :is(code, samp) > span.pre-line::before {
+    color: #999;
+    border-inline-end: 1px solid #777;
+  }
+}
+.vscode-body pre > :is(code, samp) > span.pre-line:not(:first-child) {
+  counter-increment: pre-line-number;
 }

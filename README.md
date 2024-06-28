@@ -16,11 +16,14 @@ The process is as follows.
          This default label deletion process also occurs at the beginning of a normal paragraph. But if it's a general document, this shouldn't be a problem.
 4. If It has the caption paragraph, convert them to figure and figcaption element.
     - The class attribute etc. is attached to the figure element according to the caption label.
-5. If It is samp block (that is codeblock surrounded by ```` ```smap```` ~ ```` ``` ````), convert `<code>` to `<samp>`.
+5. If It is samp block (that is codeblock surrounded by ```` ```smap```` ~ ```` ``` ````), convert `<code>` to `<samp>`. 
+    - Although `samp` is specified, this conversion is applied even if `shell` or `console` is specified.
+
+Notice. If markdown-it-attrs has not been imported by any other plugin, it will be imported. This allows you to specify attributes of the block by writing `{.style}` at the end of the line, etc.
 
 ## Use
 
-To use this extension, reload VSCode once after installing this extension.
+If this extension does not work after installing it, please restart VSCode once.
 
 ## Caption Paragraph Rule
 
@@ -276,7 +279,7 @@ Notice. If you do not want to display the blockquote label, delete `"blockquote"
 ### Code/Samp-block example
 
 the figure element has class attribute and role="doc-example".
-If `samp` is specified, the samp tag will be used.
+If `samp` or `shell`, `console` is specified, the samp tag will be used. If you use `shell` and `console`, span elements for code highlighting will be set.
 
 ~~~ {.language-md}
 Code 1. A codeblock caption.
@@ -285,29 +288,42 @@ Code 1. A codeblock caption.
 console.log('Hello World!');
 ```
 
-Terminal A. A terminal aption.
+Terminal A. A terminal caption.
 
 ```samp
+$ pwd
+/home/user
+```
+
+Terminal B. A terminal caption.
+
+```shell
 $ pwd
 /home/user
 ```
 ~~~
 
 ```html
-<figure class="f-pre-code" role="doc-example">
+<figure class="f-pre-code">
 <figcaption><span class="f-pre-code-label">Code<span class="f-pre-code-label-joint">.</span></span> A codeblock caption.</figcaption>
 <pre><code class="language-js">console.log('Hello World!');
 </code></pre>
 </figure>
-<figure class="f-pre-samp" role="doc-example">
+<figure class="f-pre-samp">
 <figcaption><span class="f-pre-samp-label">Terminal A<span class="f-pre-samp-label-joint">.</span></span> A terminal caption.</figcaption>
 <pre><samp>$ pwd
 /home/user
 </samp></pre>
 </figure>
+<figure class="f-pre-samp">
+<figcaption><span class="f-pre-samp-label">Terminal A<span class="f-pre-samp-label-joint">.</span></span> A terminal caption.</figcaption>
+<pre><samp class="language-shell"><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">pwd</span></span><span class="lineend-spacer"></span>
+/home/user
+</samp></pre>
+</figure>
 ```
 
-Of course, you can also do it without labels. (with default settings)
+Of course, you can also do it without label numbers. (with default settings)
 
 ~~~ {.language-md}
 Code. A codeblock caption.
@@ -325,18 +341,20 @@ $ pwd
 ~~~
 
 ```html
-<figure class="f-pre-code" role="doc-example">
+<figure class="f-pre-code">
 <figcaption>A codeblock caption.</figcaption>
 <pre><code class="language-js">console.log('Hello World!');
 </code></pre>
 </figure>
-<figure class="f-pre-samp" role="doc-example">
+<figure class="f-pre-samp">
 <figcaption>A terminal caption.</figcaption>
 <pre><samp>$ pwd
 /home/user
 </samp></pre>
 </figure>
 ```
+
+**Notice.** In versions prior to 0.5, `role="doc-example"` was output to the figure element surrounding the code/samp block, but in 0.5, it is no longer output by default. If you want to output it, set the option `setRoleDocExample` to `true`.
 
 ### Table example
 
@@ -546,6 +564,29 @@ This is identified by `imageTitleAttribute.match(/(?:(?:(?:大きさ|サイズ)�
 
 If `px` is specified, the numerical value is treated as the width after resizing.
 
+## Dispaly Line number for code/samp block
+
+You can add a `start` or `data-pre-start` attribute to a code/samp block to display line numbers for that block.
+
+~~~{.language-md}
+```js {start="1"}
+import mdit from 'markdown-it'
+const md = mdit()
+const htmlCont = md.render('Nyan.')
+```
+~~~
+
+```html
+<pre><code class="language-js" data-pre-start="1" style="counter-set:pre-line-number 1;"><span class="pre-line"><span class="hljs-keyword">import</span> mdit <span class="hljs-keyword">from</span> <span class="hljs-string">'markdown-it'</span></span><span class="lineend-spacer"></span>
+<span class="pre-line"><span class="hljs-keyword">const</span> md = <span class="hljs-title function_">mdit</span>()</span><span class="lineend-spacer"></span>
+<span class="pre-line"><span class="hljs-keyword">const</span> htmlCont = md.<span class="hljs-title function_">render</span>(<span class="hljs-string">'Nyan.'</span>)</span><span class="lineend-spacer"></span>
+</code></pre>
+```
+
+![](./docs/codeblock-with-line-number.png)
+
+Figure 2. Code block with Line number in markdown preview.
+
 ## Option
 
 - `p7dMarkdownItFigureWithPCaption.disableStyle`: Disable [defalt CSS:](https://github.com/peaceroad/vsce-p7d-markdown-it-figure-with-p-caption/blob/main/style/figure-with-p-caption.css) of this extension.
@@ -555,7 +596,208 @@ If `px` is specified, the numerical value is treated as the width after resizing
 - `p7dMarkdownItFigureWithPCaption.setDoubleAsteriskFileName`: Set Filename. Part `**Filename**` of `Caption. **Filename** A text.` convert to `<strong class="f-pre-code-filename">Filename</strong>`.
 - `p7dMarkdownItFigureWithPCaption.convertJointSpaceToHalfWidth`: Convert full-width space to half-width space in label joint.
 - `p7dMarkdownItFigureWithPCaption.notSetImageElementAttributes`: Not set width, height, lazyload attributes of image element.
-- `p7dMarkdownItFigureWithPCaption.wrapIframeWithoutCaptionByFigure`: Wrap iframe elemet without a caption by figure element.
-- `p7dMarkdownItFigureWithPCaption.wrapVideoWithoutCaptionByFigure`: Wrap video elemet without a caption by figure element.
+- `p7dMarkdownItFigureWithPCaption.wrapIframeWithoutCaptionByFigure`: Wrap iframe element without a caption by figure element.
+- `p7dMarkdownItFigureWithPCaption.wrapVideoWithoutCaptionByFigure`: Wrap video element without a caption by figure element.
+- `p7dMarkdownItFigureWithPCaption.iframeTypeBlockquoteWithoutCaptionByFigure`: Wrap iframe type blockquote element without a caption by figure element
 
 Notice. When you change the option, the screen will automatically reload, but if you don't hear it, restart VS Code once.
+
+
+### Option to use image alt/tiltle as caption instead of paragraph caption
+
+- `p7dMarkdownItFigureWithPCaption.useImgAltCaption`: Use the alt attribute of the img element for the caption. Specify the text of the label. Example: "Figure" , "図"
+- `p7dMarkdownItFigureWithPCaption.useImgTitleCaption`: Use the title attribute of the img element for the caption. Specify the text of the label. Example: "Figure" , "図"
+
+This allows the following transformation, which is a trade-off with the default behavior of writing the caption in the paragraph before it:
+
+### useImgAltCaption: "Figure"
+
+```md
+![Figure 1. A caption.](example.jpg)
+
+![A caption.](example.jpg)
+```
+
+```html
+<figure class="f-img">
+<figcaption><span class="f-img-label">Figure 1<span class="f-img-label-joint">.</span></span> A caption.</figcaption>
+<img alt="" src="example.jpg">
+</figure>
+<figure class="f-img">
+<figcaption>A caption.</figcaption>
+<img alt="" src="example.jpg">
+</figure>
+```
+
+### useImgTitleCaption: "Figure"
+
+```md
+![A alt text.](example.jpg "Figure 1. A caption.")
+
+![A alt text.](example.jpg "A caption.")
+```
+
+```html
+<figure class="f-img">
+<figcaption><span class="f-img-label">Figure 1<span class="f-img-label-joint">.</span></span> A caption.</figcaption>
+<img alt="A alt text." src="example.jpg">
+</figure>
+<figure class="f-img">
+<figcaption>A caption.</figcaption>
+<img alt="A alt text." src="example.jpg">
+</figure>
+```
+
+#### yaml frontmatter setting of imgAltCaption / imgTitleCaption (beta)
+
+Notice. Beta feature. I made it so that the settings would be effective even if you wrote `imgAltCaption: "Figure"` or `imgTitleCaption: "Figure"` in yaml frontmatter of the Markdown file, but currently this setting is not read in real time and works. Therefore, if you write the setting in markdown file, you need to restart once.
+
+```md
+---
+imgAltCaption: "Figure"
+---
+
+![Figure 1. A Caption](example.jpg)
+```
+
+## Command
+
+Often captions are written in the alt and title attributes of images. This plugin includes commands to turn those into caption paragraphs in this plugin format.
+
+Also, to insert figure numbers, I included a command to assign consecutive numbers to the figure caption paragraphs from the top of the Markdown file.
+
+**Notice.** For now, it's a rough conversion. If you run the command twice in a row, the conversion results will be messed up.
+
+### Command: setImgAltAttrToPCaption
+
+Set markdown img alt attribute to caption's paragraph.
+
+```md
+
+![キャプション](exampe.jpg)
+
+↓
+
+図　キャプション
+
+![](exampe.jpg)
+```
+
+```md
+
+![図 キャプション](exampe.jpg)
+
+↓
+
+図 キャプション
+
+![](exampe.jpg)
+```
+
+```md
+![Figure. A caption.](exampe.jpg)
+
+↓
+
+Figure. A. caption.
+
+![](exampe.jpg)
+```
+
+```md
+---
+lang: "en"
+---
+
+![A caption.](exampe.jpg)
+
+↓
+
+Figure. A. caption.
+
+![](exampe.jpg)
+```
+
+
+**Notice.** Or, if you set option `p7dMarkdownItFigureWithPCaption.useImgAttrToPCaptionLabelLang`  to `en`, `Figure` will be used as the label instead of `図`.
+
+### Command: setImgTitleAttrToPCaption
+
+Markdown: Set img title attribute to caption's paragraph.
+
+```md
+![ALT](exampe.jpg "キャプション")
+
+↓
+
+図　キャプション
+
+![ALT](exampe.jpg)
+```
+
+```md
+---
+lang: "en"
+---
+
+![ALT](exampe.jpg "キャプション")
+
+↓
+
+Figure. キャプション
+
+![ALT](exampe.jpg)
+```
+
+### Command: setFigureCaptionNumber
+
+Markdown: Set figure caption number.
+
+
+```md
+図 キャプション
+
+![](exampe.jpg)
+
+図 キャプション
+
+![](exampe.jpg)
+
+↓
+
+図1 キャプション
+
+![](exampe.jpg)
+
+図2 キャプション
+
+![](exampe.jpg)
+```
+
+```md
+Figure. キャプション
+
+![](exampe.jpg)
+
+Figure. キャプション
+
+![](exampe.jpg)
+
+↓
+
+Figure 1. キャプション
+
+![](exampe.jpg)
+
+Figure 2. キャプション
+
+![](exampe.jpg)
+```
+
+
+## Build this extension package
+
+```samp
+$ npm run build
+vsce package
+```

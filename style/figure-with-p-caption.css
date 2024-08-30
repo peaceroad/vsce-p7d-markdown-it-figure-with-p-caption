@@ -124,7 +124,7 @@ figure.f-table > table:not(thead) tr:first-child td {
 .vscode-body pre > :is(code, samp) > span.pre-line::before {
   display: inline-block;
   content: counter(pre-line-number);
-  width: 2em;
+  width: 2.2em;
   text-align: end;
   margin-inline-end: 0.5em;
   padding-inline-end: 0.25em;

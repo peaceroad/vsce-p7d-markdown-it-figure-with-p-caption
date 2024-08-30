@@ -235,7 +235,6 @@ export function activate (context) {
   workspace.onDidChangeTextDocument(event => {
     if (pat !== '' && window.activeTextEditor && event.document.uri.toString() === window.activeTextEditor.document.uri.toString()) {
       updateExOption(window.activeTextEditor)
-      console.log('hasUpdate: ' + hasUpdate)
       if (hasUpdate) {
         setCommands(exOption)
         hasUpdate = false

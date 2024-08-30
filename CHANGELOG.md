@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.5.1 2024/08/30
+
+Minor bug fixes etc.
+
+- Update @peaceroad/markdown-it-figure-with-p-caption@0.9.1 (@peaceroad/markdown-it-p-captions@0.14.0)
+- Update @peaceroad/markdown-it-renderer-image@0.3.1
+- Update markdown-it-attrs@4.2.0
+
+Note. 152
+
 ## 0.5.0 2024/06/28
 
 Major changes.
@@ -9,7 +19,7 @@ Major changes.
 - Add import @peaceroad/markdown-it-renderer-fence@0.1.1
 - Add import markdown-it-attrs (If it is not imported by another plugin.)
 - Add `shell` and `console` to the language codes to be converted to samp block.
-    - These two keywords set span tags for highlight.
+    - These two keywords set span tags for highlight.qq
 - Support Code/samp block with line numbers.
 - Fix Iframe type blockquote process.
 - Add commands. But for now, it's a rough conversion.

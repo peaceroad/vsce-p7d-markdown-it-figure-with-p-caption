@@ -799,5 +799,5 @@ Figure 2. キャプション
 
 ```samp
 $ npm run build
-vsce package
+$ vsce package
 ```

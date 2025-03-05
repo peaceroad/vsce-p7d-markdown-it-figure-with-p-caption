@@ -278,6 +278,7 @@ export function activate (context) {
       imgAltCaption: exOption.imgAltCaption,
       imgTitleCaption: exOption.imgTitleCaption,
       roleDocExample: exOption.roleDocExample,
+      allIframeTypeFigureClassName: 'f-embed',
     }).use(mditRendererFence)
     if (!isMditAttrsLoaded(md)) {
       md.use(mditAttrs)

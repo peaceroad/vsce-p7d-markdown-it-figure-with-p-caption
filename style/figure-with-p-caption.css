@@ -102,6 +102,10 @@ figure.f-table > table:not(thead) tr:first-child td {
   border-block-start: 1px solid currentcolor;
 }
 
+/* pre-code, pre-samp */
+.vscode-body pre > :is(code, samp) {
+  display: block;
+}
 .vscode-body  figure[class|="f-pre"] {
   align-items: normal;
 }
@@ -111,6 +115,8 @@ figure.f-table > table:not(thead) tr:first-child td {
   word-break: break-all;
   white-space: break-spaces;
 }
+
+/* Blockquote */
 .vscode-body figure.f-blockquote {
   align-items: normal;
   margin-inline:  1em;
@@ -121,7 +127,7 @@ figure.f-table > table:not(thead) tr:first-child td {
   inline-size: inherit;
 }
 
-.vscode-body pre > :is(code, samp) > span.pre-line::before {
+.vscode-body pre > :is(code, samp) span.pre-line::before {
   display: inline-block;
   content: counter(pre-line-number);
   width: 2.2em;
@@ -130,17 +136,26 @@ figure.f-table > table:not(thead) tr:first-child td {
   padding-inline-end: 0.25em;
 }
 @media (prefers-color-scheme: light) {
-  .vscode-body pre > :is(code, samp) > span.pre-line::before {
+  .vscode-body pre > :is(code, samp) span.pre-line::before {
     color: #555;
     border-inline-end: 1px solid #777;
   }
-}
-@media (prefers-color-scheme: dark) {
-  .vscode-body pre > :is(code, samp) > span.pre-line::before {
-    color: #999;
-    border-inline-end: 1px solid #777;
+  .vscode-body pre > :is(code, samp) span.pre-lines-emphasis {
+    display: block;
+    background-color: rgb(255, 255, 220);
   }
 }
-.vscode-body pre > :is(code, samp) > span.pre-line:not(:first-child) {
+@media (prefers-color-scheme: dark) {
+  .vscode-body pre > :is(code, samp) span.pre-line::before {
+    color: #A0A0A0;
+    border-inline-end: 1px solid #777;
+  }
+  .vscode-body pre > :is(code, samp) span.pre-lines-emphasis {
+    display: block;
+    background-color: rgb(50, 50, 0);
+  }
+}
+.vscode-body pre > :is(code, samp) span.pre-line::after {
+  content: '';
   counter-increment: pre-line-number;
 }

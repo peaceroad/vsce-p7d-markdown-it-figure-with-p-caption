@@ -36,7 +36,7 @@ Table. The beginning string identified as a caption.
 | `img` | fig, figure, illust, photo, 図, イラスト, 写真 |
 | `table` | table, 表 |
 | `pre-code` | code, codeblock, program, algorithm, コード, ソースコード, リスト, 命令, プログラム, 算譜, アルゴリズム, 算法 |
-| `pre-samp` | console, terminal, prompt, command, 端末, ターミナル, コマンド, コマンドプロンプト, プロンプト |
+| `pre-samp` | console, terminal, prompt, command, 端末, ターミナル, コマンド, コマンドプロンプト, プロンプト, リスト, 図 |
 | `blockquote` | source, quote, blockquote, 引用, 引用元, 出典 |
 | `slide` | slide, スライド |
 
@@ -586,6 +586,33 @@ const htmlCont = md.render('Nyan.')
 ![](./docs/codeblock-with-line-number.png)
 
 Figure 2. Code block with Line number in markdown preview.
+
+## Display line's block to be highlighted for code/samp block
+
+You can also emphasize blocks of lines by using the "em-lines" or "emphasis-lines" attribute. Use "," as a separator and "-" for ranges.
+
+~~~md
+```js {em-lines="2-3,5"}
+import mdit from 'markdown-it'
+const md = mdit()
+const htmlCont = md.render('Nyan.')
+const htmlCont = md.render('Nyan Nyan.')
+const htmlCont = md.render('Nyan Nyan Nyan.')
+```
+~~~
+
+```html
+<pre><code class="language-js">import mdit from 'markdown-it'
+<span class="pre-lines-emphasis">const md = mdit()
+const htmlCont = md.render('Nyan.')
+</span>const htmlCont = md.render('Nyan Nyan.')
+<span class="pre-lines-emphasis">const htmlCont = md.render('Nyan Nyan Nyan.')
+</span></code></pre>
+```
+
+![](./docs/codeblock-with-emphasis-lines.png)
+
+Figure 3. emphasis lines in markdown preview
 
 ## Option
 

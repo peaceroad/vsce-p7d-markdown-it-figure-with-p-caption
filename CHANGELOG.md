@@ -1,5 +1,18 @@
 # Change Log
 
+## 0.6.0 2025/03/05
+
+Major changes.
+
+- Update @peaceroad/markdown-it-figure-with-p-caption@0.11.0 (@peaceroad/markdown-it-p-captions@0.16.0)
+    - "リスト" and "図" of pre-samp is also applicable.
+    - Set the class attribute (.f-embed) for iframe and blockquote type embedded figure.
+- Update @peaceroad/markdown-it-renderer-fence@0.3.2
+    - Support em-lines attribute.
+- Adjust CSS a bit.
+
+Note. 163
+
 ## 0.5.1 2024/08/30
 
 Minor bug fixes etc.

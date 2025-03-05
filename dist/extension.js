@@ -3605,21 +3605,21 @@ var require_utils2 = __commonJS({
       return methods[methodName](input, offset);
     }
     exports2.readUInt = readUInt;
-    function readBox(buffer, offset) {
-      if (buffer.length - offset < 4)
+    function readBox(input, offset) {
+      if (input.length - offset < 4)
         return;
-      const boxSize = (0, exports2.readUInt32BE)(buffer, offset);
-      if (buffer.length - offset < boxSize)
+      const boxSize = (0, exports2.readUInt32BE)(input, offset);
+      if (input.length - offset < boxSize)
         return;
       return {
-        name: (0, exports2.toUTF8String)(buffer, 4 + offset, 8 + offset),
+        name: (0, exports2.toUTF8String)(input, 4 + offset, 8 + offset),
         offset,
         size: boxSize
       };
     }
-    function findBox(buffer, boxName, offset) {
-      while (offset < buffer.length) {
-        const box = readBox(buffer, offset);
+    function findBox(input, boxName, offset) {
+      while (offset < input.length) {
+        const box = readBox(input, offset);
         if (!box)
           break;
         if (box.name === boxName)
@@ -3766,7 +3766,7 @@ var require_heif = __commonJS({
       avif: "avif",
       mif1: "heif",
       msf1: "heif",
-      // hief-sequence
+      // heif-sequence
       heic: "heic",
       heix: "heic",
       hevc: "heic",
@@ -3775,21 +3775,26 @@ var require_heif = __commonJS({
       // heic-sequence
     };
     exports2.HEIF = {
-      validate(buffer) {
-        const ftype = (0, utils_1.toUTF8String)(buffer, 4, 8);
-        const brand = (0, utils_1.toUTF8String)(buffer, 8, 12);
-        return "ftyp" === ftype && brand in brandMap;
+      validate(input) {
+        const boxType = (0, utils_1.toUTF8String)(input, 4, 8);
+        if (boxType !== "ftyp")
+          return false;
+        const ftypBox = (0, utils_1.findBox)(input, "ftyp", 0);
+        if (!ftypBox)
+          return false;
+        const brand = (0, utils_1.toUTF8String)(input, ftypBox.offset + 8, ftypBox.offset + 12);
+        return brand in brandMap;
       },
-      calculate(buffer) {
-        const metaBox = (0, utils_1.findBox)(buffer, "meta", 0);
-        const iprpBox = metaBox && (0, utils_1.findBox)(buffer, "iprp", metaBox.offset + 12);
-        const ipcoBox = iprpBox && (0, utils_1.findBox)(buffer, "ipco", iprpBox.offset + 8);
-        const ispeBox = ipcoBox && (0, utils_1.findBox)(buffer, "ispe", ipcoBox.offset + 8);
+      calculate(input) {
+        const metaBox = (0, utils_1.findBox)(input, "meta", 0);
+        const iprpBox = metaBox && (0, utils_1.findBox)(input, "iprp", metaBox.offset + 12);
+        const ipcoBox = iprpBox && (0, utils_1.findBox)(input, "ipco", iprpBox.offset + 8);
+        const ispeBox = ipcoBox && (0, utils_1.findBox)(input, "ispe", ipcoBox.offset + 8);
         if (ispeBox) {
           return {
-            height: (0, utils_1.readUInt32BE)(buffer, ispeBox.offset + 16),
-            width: (0, utils_1.readUInt32BE)(buffer, ispeBox.offset + 12),
-            type: (0, utils_1.toUTF8String)(buffer, 8, 12)
+            height: (0, utils_1.readUInt32BE)(input, ispeBox.offset + 16),
+            width: (0, utils_1.readUInt32BE)(input, ispeBox.offset + 12),
+            type: (0, utils_1.toUTF8String)(input, 8, 12)
           };
         }
         throw new TypeError("Invalid HEIF, no size found");
@@ -3898,7 +3903,7 @@ var require_j2c = __commonJS({
     var utils_1 = require_utils2();
     exports2.J2C = {
       // TODO: this doesn't seem right. SIZ marker doesn't have to be right after the SOC
-      validate: (input) => (0, utils_1.toHexString)(input, 0, 4) === "ff4fff51",
+      validate: (input) => (0, utils_1.readUInt32BE)(input, 0) === 4283432785,
       calculate: (input) => ({
         height: (0, utils_1.readUInt32BE)(input, 12),
         width: (0, utils_1.readUInt32BE)(input, 8)
@@ -3916,12 +3921,14 @@ var require_jp2 = __commonJS({
     var utils_1 = require_utils2();
     exports2.JP2 = {
       validate(input) {
-        if ((0, utils_1.readUInt32BE)(input, 4) !== 1783636e3 || (0, utils_1.readUInt32BE)(input, 0) < 1)
+        const boxType = (0, utils_1.toUTF8String)(input, 4, 8);
+        if (boxType !== "jP  ")
           return false;
         const ftypBox = (0, utils_1.findBox)(input, "ftyp", 0);
         if (!ftypBox)
           return false;
-        return (0, utils_1.readUInt32BE)(input, ftypBox.offset + 4) === 1718909296;
+        const brand = (0, utils_1.toUTF8String)(input, ftypBox.offset + 8, ftypBox.offset + 12);
+        return brand === "jp2 ";
       },
       calculate(input) {
         const jp2hBox = (0, utils_1.findBox)(input, "jp2h", 0);
@@ -4032,6 +4039,158 @@ var require_jpg = __commonJS({
           input = input.slice(i + 2);
         }
         throw new TypeError("Invalid JPG, no size found");
+      }
+    };
+  }
+});
+
+// node_modules/image-size/dist/utils/bit-reader.js
+var require_bit_reader = __commonJS({
+  "node_modules/image-size/dist/utils/bit-reader.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.BitReader = void 0;
+    var BitReader = class {
+      constructor(input, endianness) {
+        this.input = input;
+        this.endianness = endianness;
+        this.byteOffset = 2;
+        this.bitOffset = 0;
+      }
+      /** Reads a specified number of bits, and move the offset */
+      getBits(length = 1) {
+        let result = 0;
+        let bitsRead = 0;
+        while (bitsRead < length) {
+          if (this.byteOffset >= this.input.length) {
+            throw new Error("Reached end of input");
+          }
+          const currentByte = this.input[this.byteOffset];
+          const bitsLeft = 8 - this.bitOffset;
+          const bitsToRead = Math.min(length - bitsRead, bitsLeft);
+          if (this.endianness === "little-endian") {
+            const mask = (1 << bitsToRead) - 1;
+            const bits = currentByte >> this.bitOffset & mask;
+            result |= bits << bitsRead;
+          } else {
+            const mask = (1 << bitsToRead) - 1 << 8 - this.bitOffset - bitsToRead;
+            const bits = (currentByte & mask) >> 8 - this.bitOffset - bitsToRead;
+            result = result << bitsToRead | bits;
+          }
+          bitsRead += bitsToRead;
+          this.bitOffset += bitsToRead;
+          if (this.bitOffset === 8) {
+            this.byteOffset++;
+            this.bitOffset = 0;
+          }
+        }
+        return result;
+      }
+    };
+    exports2.BitReader = BitReader;
+  }
+});
+
+// node_modules/image-size/dist/types/jxl-stream.js
+var require_jxl_stream = __commonJS({
+  "node_modules/image-size/dist/types/jxl-stream.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.JXLStream = void 0;
+    var utils_1 = require_utils2();
+    var bit_reader_1 = require_bit_reader();
+    function calculateImageDimension(reader, isSmallImage) {
+      if (isSmallImage) {
+        return 8 * (1 + reader.getBits(5));
+      } else {
+        const sizeClass = reader.getBits(2);
+        const extraBits = [9, 13, 18, 30][sizeClass];
+        return 1 + reader.getBits(extraBits);
+      }
+    }
+    function calculateImageWidth(reader, isSmallImage, widthMode, height) {
+      if (isSmallImage && widthMode === 0) {
+        return 8 * (1 + reader.getBits(5));
+      } else if (widthMode === 0) {
+        return calculateImageDimension(reader, false);
+      } else {
+        const aspectRatios = [1, 1.2, 4 / 3, 1.5, 16 / 9, 5 / 4, 2];
+        return Math.floor(height * aspectRatios[widthMode - 1]);
+      }
+    }
+    exports2.JXLStream = {
+      validate: (input) => {
+        return (0, utils_1.toHexString)(input, 0, 2) === "ff0a";
+      },
+      calculate(input) {
+        const reader = new bit_reader_1.BitReader(input, "little-endian");
+        const isSmallImage = reader.getBits(1) === 1;
+        const height = calculateImageDimension(reader, isSmallImage);
+        const widthMode = reader.getBits(3);
+        const width = calculateImageWidth(reader, isSmallImage, widthMode, height);
+        return { width, height };
+      }
+    };
+  }
+});
+
+// node_modules/image-size/dist/types/jxl.js
+var require_jxl = __commonJS({
+  "node_modules/image-size/dist/types/jxl.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.JXL = void 0;
+    var utils_1 = require_utils2();
+    var jxl_stream_1 = require_jxl_stream();
+    function extractCodestream(input) {
+      const jxlcBox = (0, utils_1.findBox)(input, "jxlc", 0);
+      if (jxlcBox) {
+        return input.slice(jxlcBox.offset + 8, jxlcBox.offset + jxlcBox.size);
+      }
+      const partialStreams = extractPartialStreams(input);
+      if (partialStreams.length > 0) {
+        return concatenateCodestreams(partialStreams);
+      }
+      return void 0;
+    }
+    function extractPartialStreams(input) {
+      const partialStreams = [];
+      let offset = 0;
+      while (offset < input.length) {
+        const jxlpBox = (0, utils_1.findBox)(input, "jxlp", offset);
+        if (!jxlpBox)
+          break;
+        partialStreams.push(input.slice(jxlpBox.offset + 12, jxlpBox.offset + jxlpBox.size));
+        offset = jxlpBox.offset + jxlpBox.size;
+      }
+      return partialStreams;
+    }
+    function concatenateCodestreams(partialCodestreams) {
+      const totalLength = partialCodestreams.reduce((acc, curr) => acc + curr.length, 0);
+      const codestream = new Uint8Array(totalLength);
+      let position = 0;
+      for (const partial of partialCodestreams) {
+        codestream.set(partial, position);
+        position += partial.length;
+      }
+      return codestream;
+    }
+    exports2.JXL = {
+      validate: (input) => {
+        const boxType = (0, utils_1.toUTF8String)(input, 4, 8);
+        if (boxType !== "JXL ")
+          return false;
+        const ftypBox = (0, utils_1.findBox)(input, "ftyp", 0);
+        if (!ftypBox)
+          return false;
+        const brand = (0, utils_1.toUTF8String)(input, ftypBox.offset + 8, ftypBox.offset + 12);
+        return brand === "jxl ";
+      },
+      calculate(input) {
+        const codestream = extractCodestream(input);
+        if (codestream)
+          return jxl_stream_1.JXLStream.calculate(codestream);
+        throw new Error("No codestream found in JXL container");
       }
     };
   }
@@ -4470,6 +4629,8 @@ var require_types = __commonJS({
     var j2c_1 = require_j2c();
     var jp2_1 = require_jp2();
     var jpg_1 = require_jpg();
+    var jxl_1 = require_jxl();
+    var jxl_stream_1 = require_jxl_stream();
     var ktx_1 = require_ktx();
     var png_1 = require_png();
     var pnm_1 = require_pnm();
@@ -4489,6 +4650,8 @@ var require_types = __commonJS({
       j2c: j2c_1.J2C,
       jp2: jp2_1.JP2,
       jpg: jpg_1.JPG,
+      jxl: jxl_1.JXL,
+      "jxl-stream": jxl_stream_1.JXLStream,
       ktx: ktx_1.KTX,
       png: png_1.PNG,
       pnm: pnm_1.PNM,
@@ -4874,6 +5037,9 @@ var require_patterns = __commonJS({
               ]
             }
           ],
+          /**
+           * @param {!number} j
+           */
           transform: (tokens, i, j) => {
             const token = tokens[i].children[j];
             const endChar = token.content.indexOf(options.rightDelimiter);
@@ -4923,6 +5089,136 @@ var require_patterns = __commonJS({
         },
         {
           /**
+           * | A | B |
+           * | -- | -- |
+           * | 1 | 2 |
+           *
+           * | C | D |
+           * | -- | -- |
+           *
+           * only `| A | B |` sets the colsnum metadata
+           */
+          name: "tables thead metadata",
+          tests: [
+            {
+              shift: 0,
+              type: "tr_close"
+            },
+            {
+              shift: 1,
+              type: "thead_close"
+            },
+            {
+              shift: 2,
+              type: "tbody_open"
+            }
+          ],
+          transform: (tokens, i) => {
+            const tr = utils.getMatchingOpeningToken(tokens, i);
+            const th = tokens[i - 1];
+            let colsnum = 0;
+            let n = i;
+            while (--n) {
+              if (tokens[n] === tr) {
+                tokens[n - 1].meta = Object.assign({}, tokens[n + 2].meta, { colsnum });
+                break;
+              }
+              colsnum += (tokens[n].level === th.level && tokens[n].type === th.type) >> 0;
+            }
+            tokens[i + 2].meta = Object.assign({}, tokens[i + 2].meta, { colsnum });
+          }
+        },
+        {
+          /**
+           * | A | B | C | D |
+           * | -- | -- | -- | -- |
+           * | 1 | 11 | 111 | 1111 {rowspan=3} |
+           * | 2 {colspan=2 rowspan=2} | 22 | 222 | 2222 |
+           * | 3 | 33 | 333 | 3333 |
+           */
+          name: "tables tbody calculate",
+          tests: [
+            {
+              shift: 0,
+              type: "tbody_close",
+              hidden: false
+            }
+          ],
+          /**
+           * @param {number} i index of the tbody ending
+           */
+          transform: (tokens, i) => {
+            let idx = i - 2;
+            while (idx > 0 && "tbody_open" !== tokens[--idx].type) ;
+            const calc = tokens[idx].meta.colsnum >> 0;
+            if (calc < 2) {
+              return;
+            }
+            const level = tokens[i].level + 2;
+            for (let n = idx; n < i; n++) {
+              if (tokens[n].level > level) {
+                continue;
+              }
+              const token = tokens[n];
+              const rows = token.hidden ? 0 : token.attrGet("rowspan") >> 0;
+              const cols = token.hidden ? 0 : token.attrGet("colspan") >> 0;
+              if (rows > 1) {
+                let colsnum = calc - (cols > 0 ? cols : 1);
+                for (let k = n, num = rows; k < i, num > 1; k++) {
+                  if ("tr_open" == tokens[k].type) {
+                    tokens[k].meta = Object.assign({}, tokens[k].meta);
+                    if (tokens[k].meta && tokens[k].meta.colsnum) {
+                      colsnum -= 1;
+                    }
+                    tokens[k].meta.colsnum = colsnum;
+                    num--;
+                  }
+                }
+              }
+              if ("tr_open" == token.type && token.meta && token.meta.colsnum) {
+                const max = token.meta.colsnum;
+                for (let k = n, num = 0; k < i; k++) {
+                  if ("td_open" == tokens[k].type) {
+                    num += 1;
+                  } else if ("tr_close" == tokens[k].type) {
+                    break;
+                  }
+                  num > max && (tokens[k].hidden || hidden(tokens[k]));
+                }
+              }
+              if (cols > 1) {
+                const one = [];
+                let end = n + 3;
+                let num = calc;
+                for (let k = n; k > idx; k--) {
+                  if ("tr_open" == tokens[k].type) {
+                    num = tokens[k].meta && tokens[k].meta.colsnum || num;
+                    break;
+                  } else if ("td_open" === tokens[k].type) {
+                    one.unshift(k);
+                  }
+                }
+                for (let k = n + 2; k < i; k++) {
+                  if ("tr_close" == tokens[k].type) {
+                    end = k;
+                    break;
+                  } else if ("td_open" == tokens[k].type) {
+                    one.push(k);
+                  }
+                }
+                const off = one.indexOf(n);
+                let real = num - off;
+                real = real > cols ? cols : real;
+                cols > real && token.attrSet("colspan", real + "");
+                for (let k = one.slice(num + 1 - calc - real)[0]; k < end; k++) {
+                  tokens[k].hidden || hidden(tokens[k]);
+                }
+              }
+            }
+          }
+        },
+        {
+          /**
            * *emphasis*{.with attrs=1}
            */
           name: "inline attributes",
@@ -4944,6 +5240,9 @@ var require_patterns = __commonJS({
               ]
             }
           ],
+          /**
+           * @param {!number} j
+           */
           transform: (tokens, i, j) => {
             const token = tokens[i].children[j];
             const content = token.content;
@@ -4980,6 +5279,9 @@ var require_patterns = __commonJS({
               ]
             }
           ],
+          /**
+           * @param {!number} j
+           */
           transform: (tokens, i, j) => {
             const token = tokens[i].children[j];
             const content = token.content;
@@ -5054,6 +5356,9 @@ var require_patterns = __commonJS({
               ]
             }
           ],
+          /**
+           * @param {!number} j
+           */
           transform: (tokens, i, j) => {
             const token = tokens[i].children[j];
             const content = token.content;
@@ -5086,6 +5391,9 @@ var require_patterns = __commonJS({
               ]
             }
           ],
+          /**
+           * @param {!number} j
+           */
           transform: (tokens, i, j) => {
             const token = tokens[i].children[j];
             const attrs = utils.getAttrs(token.content, 0, options);
@@ -5150,6 +5458,9 @@ var require_patterns = __commonJS({
               ]
             }
           ],
+          /**
+           * @param {!number} j
+           */
           transform: (tokens, i, j) => {
             const token = tokens[i].children[j];
             const content = token.content;
@@ -5170,6 +5481,10 @@ var require_patterns = __commonJS({
     };
     function last(arr) {
       return arr.slice(-1)[0];
+    }
+    function hidden(token) {
+      token.hidden = true;
+      token.children && token.children.forEach((t) => (t.content = "", hidden(t), void 0));
     }
   }
 });
@@ -5202,9 +5517,14 @@ var require_markdown_it_attrs = __commonJS({
               return res.match;
             });
             if (match) {
-              pattern.transform(tokens, i, j);
-              if (pattern.name === "inline attributes" || pattern.name === "inline nesting 0") {
-                p--;
+              try {
+                pattern.transform(tokens, i, j);
+                if (pattern.name === "inline attributes" || pattern.name === "inline nesting 0") {
+                  p--;
+                }
+              } catch (error) {
+                console.error(`markdown-it-attrs: Error in pattern '${pattern.name}': ${error.message}`);
+                console.error(error.stack);
               }
             }
           }
@@ -5313,103 +5633,103 @@ module.exports = __toCommonJS(extension_exports);
 var import_fs = __toESM(require("fs"));
 
 // node_modules/p7d-markdown-it-p-captions/index.js
-var convertToCaption = (state, option) => {
-  const opt = {
-    classPrefix: "caption",
-    dquoteFilename: false,
-    strongFilename: false,
-    hasNumClass: false,
-    bLabel: false,
-    strongLabel: false,
-    jointSpaceUseHalfWidth: false,
-    removeUnnumberedLabel: false,
-    removeUnnumberedLabelExceptMarks: []
-  };
-  if (option !== void 0) {
-    for (let o in option) {
-      opt[o] = option[o];
-    }
+var markAfterNum = "[A-Z0-9]{1,6}(?:[.-][A-Z0-9]{1,6}){0,5}";
+var joint = "[.:\uFF0E\u3002\uFF1A\u3000]";
+var jointFullWidth = "[\uFF0E\u3002\uFF1A\u3000]";
+var jointHalfWidth = "[.:]";
+var jointSuffixReg = new RegExp("(" + joint + "|)$");
+var markAfterEn = "(?: *(?:" + jointHalfWidth + "(?:(?=[ ]+)|$)|" + jointFullWidth + "|(?=[ ]+[^0-9a-zA-Z]))| *(" + markAfterNum + ")(?:" + jointHalfWidth + "(?:(?=[ ]+)|$)|" + jointFullWidth + "|(?=[ ]+[^a-z])|$)|[.](" + markAfterNum + ")(?:" + joint + "|(?=[ ]+[^a-z])|$))";
+var markAfterJa = "(?: *(?:" + jointHalfWidth + "(?:(?=[ ]+)|$)|" + jointFullWidth + "|(?=[ ]+))| *(" + markAfterNum + ")(?:" + jointHalfWidth + "(?:(?=[ ]+)|$)|" + jointFullWidth + "|(?=[ ]+)|$))";
+var markReg = {
+  //fig(ure)?, illust, photo
+  "img": new RegExp("^(?:([fF][iI][gG](?:[uU][rR][eE])?|[iI][lL]{2}[uU][sS][tT]|[pP][hH][oO][tT][oO])" + markAfterEn + "|(\u56F3|\u30A4\u30E9\u30B9\u30C8|\u5199\u771F)" + markAfterJa + ")"),
+  //movie, video
+  "video": new RegExp("^(?:([mM][oO][vV][iI][eE]|[vV][iI][dD][eE][oO])" + markAfterEn + "|(\u52D5\u753B|\u30D3\u30C7\u30AA)" + markAfterJa + ")"),
+  //table
+  "table": new RegExp("^(?:([tT][aA][bB][lL][eE])" + markAfterEn + "|(\u8868)" + markAfterJa + ")"),
+  //code(block)?, program
+  "pre-code": new RegExp("^(?:([cC][oO][dD][eE](?:[bB][lL][oO][cC][kK])?|[pP][rR][oO][gG][rR][aA][mM]|[aA][lL][gG][oO][rR][iI][tT][hH][mM])" + markAfterEn + "|((?:\u30BD\u30FC\u30B9)?\u30B3\u30FC\u30C9|\u30EA\u30B9\u30C8|\u547D\u4EE4|\u30D7\u30ED\u30B0\u30E9\u30E0|\u7B97\u8B5C|\u30A2\u30EB\u30B4\u30EA\u30BA\u30E0|\u7B97\u6CD5)" + markAfterJa + ")"),
+  //terminal, prompt, command
+  "pre-samp": new RegExp("^(?:([cC][oO][nN][sS][oO][lL][eE]|[tT][eE][rR][mM][iI][nN][aA][lL]|[pP][rR][oO][mM][pP][tT]|[cC][oO][mM]{2}[aA][nN][dD])" + markAfterEn + "|(\u7AEF\u672B|\u30EA\u30B9\u30C8|\u30BF\u30FC\u30DF\u30CA\u30EB|\u30B3\u30DE\u30F3\u30C9|(?:\u30B3\u30DE\u30F3\u30C9)?\u30D7\u30ED\u30F3\u30D7\u30C8|\u56F3)" + markAfterJa + ")"),
+  //quote, blockquote, source
+  "blockquote": new RegExp("^(?:((?:[bB][lL][oO][cC][kK])?[qQ][uU][oO][tT][eE]|[sS][oO][uU][rR][cC][eE])" + markAfterEn + "|(\u5F15\u7528(?:\u5143)?|\u51FA\u5178)" + markAfterJa + ")"),
+  //slide
+  "slide": new RegExp("^(?:([sS][lL][iI][dD][eE])" + markAfterEn + "|(\u30B9\u30E9\u30A4\u30C9)" + markAfterJa + ")")
+};
+var setFigureNumber = (n, state, mark, actualLabel, fNum) => {
+  const nextToken = state.tokens[n + 1];
+  fNum[mark]++;
+  let vNum = fNum[mark];
+  let regCont = "^" + actualLabel.mark;
+  let replacedCont = actualLabel.mark + (/^[a-zA-Z]/.test(actualLabel.mark) ? " " : "") + vNum;
+  actualLabel.num = vNum;
+  const reg = new RegExp(regCont);
+  nextToken.content = nextToken.content.replace(reg, replacedCont);
+  nextToken.children[0].content = nextToken.children[0].content.replace(reg, replacedCont);
+  actualLabel.content = actualLabel.content.replace(reg, replacedCont);
+  return;
+};
+var setCaptionParagraph = (n, state, caption, fNum, sp, opt) => {
+  const token = state.tokens[n];
+  const nextToken = state.tokens[n + 1];
+  const isParagraphStartTag = token.type === "paragraph_open";
+  if (!isParagraphStartTag) return caption;
+  if (n > 1) {
+    const isList = state.tokens[n - 1].type === "list_item_open";
+    if (isList) return caption;
   }
-  let n = 0;
-  const markAfterNum = "[A-Z0-9]{1,6}(?:[.-][A-Z0-9]{1,6}){0,5}";
-  const joint = "[.:\uFF0E\u3002\uFF1A\u3000]";
-  const jointFullWidth = "[\uFF0E\u3002\uFF1A\u3000]";
-  const jointHalfWidth = "[.:]";
-  const markAfterEn = "(?: *(?:" + jointHalfWidth + "(?:(?=[ ]+)|$)|" + jointFullWidth + "|(?=[ ]+[^0-9a-zA-Z]))| *(" + markAfterNum + ")(?:" + jointHalfWidth + "(?:(?=[ ]+)|$)|" + jointFullWidth + "|(?=[ ]+[^a-z])|$)|[.](" + markAfterNum + ")(?:" + joint + "|(?=[ ]+[^a-z])|$))";
-  const markAfterJa = "(?: *(?:" + jointHalfWidth + "(?:(?=[ ]+)|$)|" + jointFullWidth + "|(?=[ ]+))| *(" + markAfterNum + ")(?:" + jointHalfWidth + "(?:(?=[ ]+)|$)|" + jointFullWidth + "|(?=[ ]+)|$))";
-  const markReg = {
-    //fig(ure)?, illust, photo
-    "img": new RegExp("^(?:(?:[fF][iI][gG](?:[uU][rR][eE])?|[iI][lL]{2}[uU][sS][tT]|[pP][hH][oO][tT][oO])" + markAfterEn + "|(?:\u56F3|\u30A4\u30E9\u30B9\u30C8|\u5199\u771F)" + markAfterJa + ")"),
-    //movie, video
-    "video": new RegExp("^(?:(?:[mM][oO][vV][iI][eE]|[vV][iI][dD][eE][oO])" + markAfterEn + "|(?:\u52D5\u753B|\u30D3\u30C7\u30AA)" + markAfterJa + ")"),
-    //table
-    "table": new RegExp("^(?:(?:[tT][aA][bB][lL][eE])" + markAfterEn + "|(?:\u8868)" + markAfterJa + ")"),
-    //code(block)?, program
-    "pre-code": new RegExp("^(?:(?:[cC][oO][dD][eE](?:[bB][lL][oO][cC][kK])?|[pP][rR][oO][gG][rR][aA][mM]|[aA][lL][gG][oO][rR][iI][tT][hH][mM])" + markAfterEn + "|(?:(?:\u30BD\u30FC\u30B9)?\u30B3\u30FC\u30C9|\u30EA\u30B9\u30C8|\u547D\u4EE4|\u30D7\u30ED\u30B0\u30E9\u30E0|\u7B97\u8B5C|\u30A2\u30EB\u30B4\u30EA\u30BA\u30E0|\u7B97\u6CD5)" + markAfterJa + ")"),
-    //terminal, prompt, command
-    "pre-samp": new RegExp("^(?:(?:[cC][oO][nN][sS][oO][lL][eE]|[tT][eE][rR][mM][iI][nN][aA][lL]|[pP][rR][oO][mM][pP][tT]|[cC][oO][mM]{2}[aA][nN][dD])" + markAfterEn + "|(?:\u7AEF\u672B|\u30BF\u30FC\u30DF\u30CA\u30EB|\u30B3\u30DE\u30F3\u30C9|(?:\u30B3\u30DE\u30F3\u30C9)?\u30D7\u30ED\u30F3\u30D7\u30C8)" + markAfterJa + ")"),
-    //quote, blockquote, source
-    "blockquote": new RegExp("^(?:(?:(?:[bB][lL][oO][cC][kK])?[qQ][uU][oO][tT][eE]|[sS][oO][uU][rR][cC][eE])" + markAfterEn + "|(?:\u5F15\u7528(?:\u5143)?|\u51FA\u5178)" + markAfterJa + ")"),
-    //slide
-    "slide": new RegExp("^(?:(?:[sS][lL][iI][dD][eE])" + markAfterEn + "|(?:\u30B9\u30E9\u30A4\u30C9)" + markAfterJa + ")")
+  const actualLabel = {
+    content: "",
+    mark: "",
+    num: "",
+    joint: ""
   };
-  while (n < state.tokens.length - 1) {
-    const token = state.tokens[n];
-    const nextToken = state.tokens[n + 1];
-    const isParagraphStartTag = token.type === "paragraph_open";
-    if (!isParagraphStartTag) {
-      n++;
-      continue;
+  for (let mark of Object.keys(markReg)) {
+    const hasMarkLabel = nextToken.content.match(markReg[mark]);
+    if (!hasMarkLabel) continue;
+    if (hasMarkLabel[1] === void 0) {
+      actualLabel.mark = hasMarkLabel[4];
+      actualLabel.num = hasMarkLabel[5];
+    } else {
+      actualLabel.mark = hasMarkLabel[1];
+      actualLabel.num = hasMarkLabel[2];
     }
-    if (n > 1) {
-      const isList = state.tokens[n - 1].type === "list_item_open";
-      if (isList) {
-        n++;
-        continue;
+    if (caption.name) {
+      if (caption.name === "pre-samp" && mark === "img" && actualLabel.mark === "\u56F3") continue;
+      if (caption.name !== mark && actualLabel.mark === "\u30EA\u30B9\u30C8") continue;
+    }
+    if (sp.isIframeTypeBlockquote) {
+      if (mark !== "blockquote" && caption.name !== "blockquote") return;
+    } else if (sp.isVideoIframe) {
+      if (mark !== "video" && caption.name !== "iframe") return;
+    } else if (caption.name) {
+      if (caption.name !== "iframe" && caption.name !== mark) return;
+    }
+    token.attrJoin("class", opt.classPrefix + "-" + mark);
+    actualLabel.content = hasMarkLabel[0];
+    if (opt.setFigureNumber && (mark === "img" || mark === "table")) {
+      if (actualLabel.num === void 0) {
+        setFigureNumber(n, state, mark, actualLabel, fNum);
+      } else if (actualLabel.num > 0) {
+        fNum[mark] = actualLabel.num;
       }
     }
-    let actualLabel = "";
-    let actualNum = "";
-    let actualLabelJoint = "";
-    for (let mark of Object.keys(markReg)) {
-      const hasMarkLabel = nextToken.content.match(markReg[mark]);
-      if (hasMarkLabel) {
-        let i = 1;
-        while (i < 6) {
-          if (hasMarkLabel[i] !== void 0) {
-            actualNum = hasMarkLabel[i];
-            break;
-          }
-          i++;
-        }
-        token.attrJoin("class", opt.classPrefix + "-" + mark);
-        actualLabel = hasMarkLabel[0];
-        actualLabelJoint = actualLabel.match(new RegExp("(" + joint + "|)$"));
-        if (actualLabelJoint) {
-          actualLabelJoint = actualLabelJoint[1];
-        }
-        actualLabel = actualLabel.replace(/ *$/, "");
-        let convertJointSpaceFullWith = false;
-        if (opt.jointSpaceUseHalfWidth && actualLabelJoint === "\u3000") {
-          actualLabelJoint = "";
-          convertJointSpaceFullWith = true;
-        }
-        addLabel(state, nextToken, mark, actualLabel, actualNum, actualLabelJoint, convertJointSpaceFullWith, opt);
-        break;
-      }
+    actualLabel.joint = actualLabel.content.match(jointSuffixReg);
+    if (actualLabel.joint) {
+      actualLabel.joint = actualLabel.joint[1];
     }
-    ;
-    n++;
+    actualLabel.content = actualLabel.content.replace(/ *$/, "");
+    let convertJointSpaceFullWith = false;
+    if (opt.jointSpaceUseHalfWidth && actualLabel.joint === "\u3000") {
+      actualLabel.joint = "";
+      convertJointSpaceFullWith = true;
+    }
+    addLabelToken(state, nextToken, mark, actualLabel, convertJointSpaceFullWith, opt);
+    return;
   }
+  return;
 };
-var actualLabelContent = (actualLabel, actualLabelJoint, convertJointSpaceFullWith, opt) => {
-  actualLabel = actualLabel.replace(new RegExp("\\\\" + actualLabelJoint + "$"), "");
-  if (convertJointSpaceFullWith) {
-    actualLabel = actualLabel.replace(/　$/, "");
-  }
-  return actualLabel;
-};
-var markFilename = (state, nextToken, mark, opt) => {
+var setFilename = (state, nextToken, mark, opt) => {
   let filename = nextToken.children[0].content.match(/^([ 　]*?)"(\S.*?)"(?:[ 　]+|$)/);
   nextToken.children[0].content = nextToken.children[0].content.replace(/^[ 　]*?"\S.*?"([ 　]+|$)/, "$1");
   const beforeFilenameToken = new state.Token("text", "", 0);
@@ -5422,7 +5742,7 @@ var markFilename = (state, nextToken, mark, opt) => {
   nextToken.children.splice(0, 0, beforeFilenameToken, filenameTokenOpen, filenameTokenContent, filenameTokenClose);
   return;
 };
-var addLabel = (state, nextToken, mark, actualLabel, actualNum, actualLabelJoint, convertJointSpaceFullWith, opt) => {
+var addLabelToken = (state, nextToken, mark, actualLabel, convertJointSpaceFullWith, opt) => {
   let labelTag = "span";
   if (opt.bLabel) labelTag = "b";
   if (opt.strongLabel) labelTag = "strong";
@@ -5432,15 +5752,20 @@ var addLabel = (state, nextToken, mark, actualLabel, actualNum, actualLabelJoint
     content: new state.Token("text", "", 0),
     close: new state.Token(labelTag + "_close", labelTag, -1)
   };
-  labelToken.open.attrSet("class", opt.classPrefix + "-" + mark + "-label");
-  if (opt.hasNumClass && actualNum) {
+  let classPrefix = opt.classPrefix + "-";
+  if (!opt.removeMarkNameInCaptionClass) {
+    classPrefix += mark + "-";
+  }
+  labelToken.open.attrSet("class", classPrefix + "label");
+  if (opt.hasNumClass && actualLabel.num) {
     labelToken.open.attrJoin("class", "label-has-num");
   }
-  labelToken.content.content = actualLabelContent(actualLabel, actualLabelJoint, convertJointSpaceFullWith, opt);
-  nextToken.children[0].content = nextToken.children[0].content.replace(actualLabel, "");
+  nextToken.children[0].content = nextToken.children[0].content.replace(actualLabel.content, "");
   if (convertJointSpaceFullWith) {
-    nextToken.children[0].content = " " + nextToken.children[0].content;
+    actualLabel.content = actualLabel.content.replace(/　$/, "");
+    nextToken.children[0].content = " " + nextToken.children[0].content.replace(/^　/, "");
   }
+  labelToken.content.content = actualLabel.content;
   if (opt.strongFilename) {
     if (nextToken.children.length > 4) {
       if (nextToken.children[1].type === "strong_open" && nextToken.children[3].type === "strong_close" && /^(?:[ 　]|$)/.test(nextToken.children[4].content)) {
@@ -5450,11 +5775,11 @@ var addLabel = (state, nextToken, mark, actualLabel, actualNum, actualLabelJoint
   }
   if (opt.dquoteFilename) {
     if (nextToken.children[0].content.match(/^[ 　]*?"\S.*?"(?:[ 　]+|$)/)) {
-      markFilename(state, nextToken, mark, opt);
+      setFilename(state, nextToken, mark, opt);
     }
   }
-  if (actualNum) {
-    modifyLabel(state, nextToken, mark, labelToken, actualLabelJoint, opt);
+  if (actualLabel.num) {
+    addJointToken(state, nextToken, mark, labelToken, actualLabel.joint, opt);
   } else {
     if (opt.removeUnnumberedLabel) {
       if (opt.removeUnnumberedLabelExceptMarks.length > 0) {
@@ -5466,7 +5791,7 @@ var addLabel = (state, nextToken, mark, actualLabel, actualNum, actualLabelJoint
           }
         }
         if (isExceptMark) {
-          modifyLabel(state, nextToken, mark, labelToken, actualLabelJoint, opt);
+          addJointToken(state, nextToken, mark, labelToken, actualLabel.joint, opt);
         } else {
           nextToken.children[0].content = nextToken.children[0].content.replace(new RegExp("^ *"), "");
         }
@@ -5474,12 +5799,12 @@ var addLabel = (state, nextToken, mark, actualLabel, actualNum, actualLabelJoint
         nextToken.children[0].content = nextToken.children[0].content.replace(new RegExp("^ *"), "");
       }
     } else {
-      modifyLabel(state, nextToken, mark, labelToken, actualLabelJoint, opt);
+      addJointToken(state, nextToken, mark, labelToken, actualLabel.joint, opt);
     }
   }
   return true;
 };
-var modifyLabel = (state, nextToken, mark, labelToken, actualLabelJoint, opt) => {
+var addJointToken = (state, nextToken, mark, labelToken, actualLabelJoint, opt) => {
   nextToken.children.splice(0, 0, labelToken.first, labelToken.open, labelToken.content, labelToken.close);
   if (!actualLabelJoint) {
     return;
@@ -5490,25 +5815,108 @@ var modifyLabel = (state, nextToken, mark, labelToken, actualLabelJoint, opt) =>
     content: new state.Token("text", "", 0),
     close: new state.Token("span_close", "span", -1)
   };
-  labelJointToken.open.attrSet("class", opt.classPrefix + "-" + mark + "-label-joint");
+  let classPrefix = opt.classPrefix + "-";
+  if (!opt.removeMarkNameInCaptionClass) {
+    classPrefix += mark + "-";
+  }
+  labelJointToken.open.attrSet("class", classPrefix + "label-joint");
   labelJointToken.content.content = actualLabelJoint;
   nextToken.children.splice(3, 0, labelJointToken.open, labelJointToken.content, labelJointToken.close);
   return;
 };
-var mditPCaption = (md, option) => {
-  md.core.ruler.after("inline", "markdown-it-p-captions", (state) => {
-    convertToCaption(state, option);
-  });
+
+// node_modules/@peaceroad/markdown-it-figure-with-p-caption/imgAttrToPCaption.js
+var imgReg = /^( *!\[)(.*?)\]\( *?((.*?)(?: +?\"(.*?)\")?) *?\)( *?\{.*?\})? *$/;
+var imgAttrToPCaption = (state, startLine, opt) => {
+  let pos = state.bMarks[startLine] + state.tShift[startLine];
+  let max = state.eMarks[startLine];
+  let inline = state.src.slice(pos, max);
+  const img = inline.match(imgReg);
+  if (!img) return;
+  let alt = img[2] === void 0 ? "" : img[2];
+  let title = img[5] === void 0 ? "" : img[5];
+  let caption = "";
+  if (opt.imgAltCaption) caption = alt;
+  if (opt.imgTitleCaption) caption = title;
+  const hasMarkLabel = caption.match(markReg["img"]);
+  let modCaption = "";
+  if (hasMarkLabel) {
+    modCaption = caption;
+  } else {
+    if (typeof opt.imgAltCaption === "string" || typeof opt.imgTitleCaption === "string") {
+      if (/[a-zA-Z]/.test(opt.imgAltCaption)) {
+        if (caption === "") {
+          modCaption = (opt.imgAltCaption ? opt.imgAltCaption : opt.imgTitleCaption) + ".";
+        } else {
+          modCaption = (opt.imgAltCaption ? opt.imgAltCaption : opt.imgTitleCaption) + ". " + caption;
+        }
+      } else {
+        if (caption === "") {
+          modCaption = (opt.imgAltCaption ? opt.imgAltCaption : opt.imgTitleCaption) + " ";
+        } else {
+          modCaption = (opt.imgAltCaption ? opt.imgAltCaption : opt.imgTitleCaption) + "\u3000" + caption;
+        }
+      }
+    } else {
+      modCaption = "Figure.";
+      if (caption !== "") modCaption += " " + caption;
+    }
+  }
+  let token = state.push("paragraph_open", "p", 1);
+  token.map = [startLine, startLine + 1];
+  token = state.push("inline", "", 0);
+  token.content = modCaption;
+  token.children = [new state.Token("text", modCaption, 0)];
+  if (!opt.setFigureNumber) {
+    if (caption === "") token.attrs = [["class", "nocaption"]];
+  }
+  token = state.push("paragraph_close", "p", -1);
+  return true;
 };
-var p7d_markdown_it_p_captions_default = mditPCaption;
+var setAltToLabel = (state, n) => {
+  if (n < 2) return false;
+  if (state.tokens[n + 1].children[0].type !== "image" || !state.tokens[n - 2].children) return false;
+  if (state.tokens[n - 2].children) {
+    state.tokens[n + 1].content = state.tokens[n + 1].content.replace(/^!\[.*?\]/, "![" + state.tokens[n - 2].children[0].content + "]");
+    if (!state.tokens[n + 1].children[0].children[0]) {
+      const textToken = new state.Token("text", "", 0);
+      state.tokens[n + 1].children[0].children.push(textToken);
+    }
+    state.tokens[n + 1].children[0].children[0].content = "";
+  }
+  state.tokens[n + 1].children[0].content = "";
+  return true;
+};
+var setTitleToLabel = (state, n) => {
+  if (n < 2) return false;
+  if (state.tokens[n + 1].children[0].type !== "image") return false;
+  if (!state.tokens[n - 2].children[0]) return false;
+  state.tokens[n + 1].children[0].attrSet("alt", state.tokens[n + 1].children[0].content);
+  if (!state.tokens[n + 1].children[0].children[0]) {
+    const textToken = new state.Token("text", "", 0);
+    state.tokens[n + 1].children[0].children.push(textToken);
+  }
+  let i = 0;
+  while (0 < state.tokens[n + 1].children[0].attrs.length) {
+    if (state.tokens[n + 1].children[0].attrs[i][0] === "title") {
+      state.tokens[n + 1].children[0].attrs.splice(i, i + 1);
+      break;
+    } else {
+      state.tokens[n + 1].children[0].attrJoin("title", "");
+    }
+    i++;
+  }
+  return true;
+};
 
 // node_modules/@peaceroad/markdown-it-figure-with-p-caption/index.js
-var checkPrevCaption = (state, n, caption) => {
+var checkPrevCaption = (state, n, caption, fNum, sp, opt) => {
   if (n < 3) return caption;
   const captionStartToken = state.tokens[n - 3];
   const captionEndToken = state.tokens[n - 1];
-  if (captionStartToken === void 0 || captionEndToken === void 0) return caption;
-  if (captionStartToken.type !== "paragraph_open" && captionEndToken.type !== "paragraph_close") return caption;
+  if (captionStartToken === void 0 || captionEndToken === void 0) return;
+  if (captionStartToken.type !== "paragraph_open" && captionEndToken.type !== "paragraph_close") return;
+  setCaptionParagraph(n - 3, state, caption, fNum, sp, opt);
   let captionName = "";
   if (captionStartToken.attrs) {
     captionStartToken.attrs.forEach((attr) => {
@@ -5516,28 +5924,31 @@ var checkPrevCaption = (state, n, caption) => {
       if (attr[0] === "class" && hasCaptionName) captionName = hasCaptionName[1];
     });
   }
-  if (!captionName) return caption;
+  if (!captionName) return;
   caption.name = captionName;
-  caption.hasPrev = true;
-  return caption;
+  caption.isPrev = true;
+  return;
 };
-var changePrevCaptionPosition = (state, n, caption) => {
+var changePrevCaptionPosition = (state, n, caption, opt) => {
   const captionStartToken = state.tokens[n - 3];
   const captionInlineToken = state.tokens[n - 2];
   const captionEndToken = state.tokens[n - 1];
-  let isNoCaption = false;
-  if (captionInlineToken.attrs) {
-    for (let attr of captionInlineToken.attrs) {
-      if (attr[0] === "class" && attr[1] === "nocaption") isNoCaption = true;
+  if (opt.imgAltCaption || opt.imgTitleCaption) {
+    let isNoCaption = false;
+    if (captionInlineToken.attrs) {
+      for (let attr of captionInlineToken.attrs) {
+        if (attr[0] === "class" && attr[1] === "nocaption") isNoCaption = true;
+      }
+    }
+    if (isNoCaption) {
+      state.tokens.splice(n - 3, 3);
+      return false;
     }
   }
-  if (isNoCaption) {
-    state.tokens.splice(n - 3, 3);
-    return;
-  }
+  const attrReplaceReg = new RegExp(" *?f-" + caption.name);
   captionStartToken.attrs.forEach((attr) => {
     if (attr[0] === "class") {
-      attr[1] = attr[1].replace(new RegExp(" *?f-" + caption.name), "").trim();
+      attr[1] = attr[1].replace(attrReplaceReg, "").trim();
       if (attr[1] === "") {
         captionStartToken.attrs.splice(captionStartToken.attrIndex("class"), 1);
       }
@@ -5551,12 +5962,13 @@ var changePrevCaptionPosition = (state, n, caption) => {
   state.tokens.splice(n - 3, 3);
   return true;
 };
-var checkNextCaption = (state, en, caption) => {
-  if (en + 2 > state.tokens.length) return caption;
+var checkNextCaption = (state, en, caption, fNum, sp, opt) => {
+  if (en + 2 > state.tokens.length) return;
   const captionStartToken = state.tokens[en + 1];
   const captionEndToken = state.tokens[en + 3];
-  if (captionStartToken === void 0 || captionEndToken === void 0) return caption;
-  if (captionStartToken.type !== "paragraph_open" && captionEndToken.type !== "paragraph_close") return caption;
+  if (captionStartToken === void 0 || captionEndToken === void 0) return;
+  if (captionStartToken.type !== "paragraph_open" && captionEndToken.type !== "paragraph_close") return;
+  setCaptionParagraph(en + 1, state, caption, fNum, sp, opt);
   let captionName = "";
   if (captionStartToken.attrs) {
     captionStartToken.attrs.forEach((attr) => {
@@ -5564,10 +5976,10 @@ var checkNextCaption = (state, en, caption) => {
       if (attr[0] === "class" && hasCaptionName) captionName = hasCaptionName[1];
     });
   }
-  if (!captionName) return caption;
+  if (!captionName) return;
   caption.name = captionName;
-  caption.hasNext = true;
-  return caption;
+  caption.isNext = true;
+  return;
 };
 var changeNextCaptionPosition = (state, en, caption) => {
   const captionStartToken = state.tokens[en + 2];
@@ -5589,33 +6001,39 @@ var changeNextCaptionPosition = (state, en, caption) => {
   state.tokens.splice(en + 5, 3);
   return true;
 };
-var wrapWithFigure = (state, range, tagName, caption, replaceInsteadOfWrap, sp, opt) => {
+var wrapWithFigure = (state, range, checkTokenTagName, caption, replaceInsteadOfWrap, sp, opt) => {
   let n = range.start;
   let en = range.end;
   const figureStartToken = new state.Token("figure_open", "figure", 1);
-  figureStartToken.attrSet("class", "f-" + tagName);
-  if (sp.isVideoIframe) {
-    figureStartToken.attrSet("class", "f-video");
-  }
-  if (sp.isIframeTypeBlockQuote) {
-    let figureClassThatWrapsIframeTypeBlockquote = "i-frame";
-    if (caption.prev || caption.next) {
-      if (caption.name === "img") {
-        figureClassThatWrapsIframeTypeBlockquote = "f-img";
+  figureStartToken.attrSet("class", "f-" + checkTokenTagName);
+  if (opt.allIframeTypeFigureClassName === "") {
+    if (sp.isVideoIframe) {
+      figureStartToken.attrSet("class", "f-video");
+    }
+    if (sp.isIframeTypeBlockquote) {
+      let figureClassThatWrapsIframeTypeBlockquote = "i-frame";
+      if (caption.isPrev || caption.isNext) {
+        if (caption.name === "blockquote" || caption.name === "img") {
+          figureClassThatWrapsIframeTypeBlockquote = "f-img";
+        }
+        figureStartToken.attrSet("class", figureClassThatWrapsIframeTypeBlockquote);
+      } else {
+        figureClassThatWrapsIframeTypeBlockquote = opt.figureClassThatWrapsIframeTypeBlockquote;
+        figureStartToken.attrSet("class", figureClassThatWrapsIframeTypeBlockquote);
       }
-      figureStartToken.attrSet("class", figureClassThatWrapsIframeTypeBlockquote);
-    } else {
-      figureClassThatWrapsIframeTypeBlockquote = opt.figureClassThatWrapsIframeTypeBlockquote;
-      figureStartToken.attrSet("class", figureClassThatWrapsIframeTypeBlockquote);
+    }
+  } else {
+    if (checkTokenTagName === "iframe" || sp.isIframeTypeBlockquote) {
+      figureStartToken.attrSet("class", opt.allIframeTypeFigureClassName);
     }
   }
-  if (/pre-(?:code|samp)/.test(tagName) && opt.roleDocExample) {
+  if (/pre-(?:code|samp)/.test(checkTokenTagName) && opt.roleDocExample) {
     figureStartToken.attrSet("role", "doc-example");
   }
   const figureEndToken = new state.Token("figure_close", "figure", -1);
   const breakToken = new state.Token("text", "", 0);
   breakToken.content = "\n";
-  if (opt.styleProcess && caption.hasNext && sp.attrs.length > 0) {
+  if (opt.styleProcess && caption.isNext && sp.attrs.length > 0) {
     for (let attr of sp.attrs) {
       figureStartToken.attrJoin(attr[0], attr[1]);
     }
@@ -5636,16 +6054,20 @@ var wrapWithFigure = (state, range, tagName, caption, replaceInsteadOfWrap, sp, 
   }
   range.start = n;
   range.end = en;
-  return range;
+  return;
 };
-var checkCaption = (state, n, en, caption) => {
-  caption = checkPrevCaption(state, n, caption);
-  if (caption.hasPrev) return caption;
-  caption = checkNextCaption(state, en, caption);
-  return caption;
+var checkCaption = (state, n, en, caption, fNum, sp, opt) => {
+  checkPrevCaption(state, n, caption, fNum, sp, opt);
+  if (caption.isPrev) return;
+  checkNextCaption(state, en, caption, fNum, sp, opt);
+  return;
 };
 var figureWithCaption = (state, opt) => {
   let n = 0;
+  let fNum = {
+    img: 0,
+    table: 0
+  };
   while (n < state.tokens.length) {
     const token = state.tokens[n];
     const nextToken = state.tokens[n + 1];
@@ -5655,63 +6077,67 @@ var figureWithCaption = (state, opt) => {
       end: en
     };
     let checkToken = false;
-    let hasCloseTag = false;
-    let tagName = "";
+    let checkTokenTagName = "";
     let caption = {
+      mark: "",
       name: "",
       nameSuffix: "",
-      hasPrev: false,
-      hasNext: false
+      isPrev: false,
+      isNext: false
     };
     const sp = {
       attrs: [],
       isVideoIframe: false,
-      isIframeTypeBlockQuote: false,
+      isIframeTypeBlockquote: false,
       hasImgCaption: false
     };
-    const checkTags = ["table", "pre", "blockquote"];
+    const checkTypes = ["table", "pre", "blockquote"];
     let cti = 0;
-    while (cti < checkTags.length) {
-      if (token.type === checkTags[cti] + "_open") {
-        if (n > 1) {
-          if (state.tokens[n - 2].type === "figure_open") {
-            cti++;
-            continue;
-          }
+    while (cti < checkTypes.length) {
+      if (token.type === checkTypes[cti] + "_open") {
+        if (n > 1 && state.tokens[n - 2].type === "figure_open") {
+          cti++;
+          continue;
         }
         checkToken = true;
-        caption.name = checkTags[cti];
-        tagName = token.tag;
+        checkTokenTagName = token.tag;
+        caption.name = checkTypes[cti];
+        if (checkTypes[cti] === "pre") {
+          if (state.tokens[n + 1].tag === "code") caption.mark = "pre-code";
+          if (state.tokens[n + 1].tag === "samp") caption.mark = "pre-samp";
+          caption.name = caption.mark;
+        }
         while (en < state.tokens.length) {
-          if (state.tokens[en].type === tagName + "_close") {
-            hasCloseTag = true;
+          if (state.tokens[en].type === checkTokenTagName + "_close") {
             break;
           }
           en++;
         }
         range.end = en;
-        caption = checkCaption(state, n, en, caption);
-        if (caption.hasPrev || caption.hasNext) {
-          range = wrapWithFigure(state, range, tagName, caption, false, sp, opt);
+        checkCaption(state, n, en, caption, fNum, sp, opt);
+        if (caption.isPrev || caption.isNext) {
+          wrapWithFigure(state, range, checkTokenTagName, caption, false, sp, opt);
         }
         break;
       }
       if (token.type === "fence") {
         if (token.tag === "code" && token.block) {
           checkToken = true;
-          let isSampInfo = false;
+          let isSamp = false;
           if (/^ *(?:samp|shell|console)(?:(?= )|$)/.test(token.info)) {
             token.tag = "samp";
-            isSampInfo = true;
+            isSamp = true;
           }
-          if (isSampInfo) {
-            tagName = "pre-samp";
+          if (isSamp) {
+            checkTokenTagName = "pre-samp";
+            caption.name = "pre-samp";
           } else {
-            tagName = "pre-code";
+            checkTokenTagName = "pre-code";
+            caption.name = "pre-code";
           }
-          caption = checkCaption(state, n, en, caption);
-          if (caption.hasPrev || caption.hasNext) {
-            range = wrapWithFigure(state, range, tagName, caption, false, sp, opt);
+          checkCaption(state, n, en, caption, fNum, sp, opt);
+          if (caption.isPrev || caption.isNext) {
+            wrapWithFigure(state, range, checkTokenTagName, caption, false, sp, opt);
             break;
           }
         }
@@ -5720,23 +6146,64 @@ var figureWithCaption = (state, opt) => {
       cti++;
     }
     if (token.type === "html_block") {
-      const tags = ["video", "audio", "iframe", "blockquote"];
+      const tags = ["video", "audio", "iframe", "blockquote", "div"];
       let ctj = 0;
+      let hasTag;
       while (ctj < tags.length) {
-        const hasTag = token.content.match(new RegExp("^<" + tags[ctj] + " ?[^>]*?>[\\s\\S]*?<\\/" + tags[ctj] + ">(\\n| *?)(<script [^>]*?>(?:<\\/script>)?)? *(\\n|$)"));
-        if (!hasTag) {
+        if (tags[ctj] === "div") {
+          hasTag = token.content.match(new RegExp("^<" + tags[ctj] + " ?[^>]*?><iframe[^>]*?>[\\s\\S]*?<\\/iframe><\\/" + tags[ctj] + ">(\\n| *?)(<script [^>]*?>(?:<\\/script>)?)? *(\\n|$)"));
+          tags[ctj] = "iframe";
+          sp.isVideoIframe = true;
+        } else {
+          hasTag = token.content.match(new RegExp("^<" + tags[ctj] + " ?[^>]*?>[\\s\\S]*?<\\/" + tags[ctj] + ">(\\n| *?)(<script [^>]*?>(?:<\\/script>)?)? *(\\n|$)"));
+        }
+        const blueskyContMatch = token.content.match(new RegExp('^<blockquote class="bluesky-embed"[^]*?>[\\s\\S]*$'));
+        if (!(hasTag || blueskyContMatch && tags[ctj] === "blockquote")) {
           ctj++;
           continue;
         }
-        if (hasTag[2] && hasTag[3] !== "\n" || hasTag[1] !== "\n" && hasTag[2] === void 0) {
-          token.content += "\n";
+        if (hasTag) {
+          if (hasTag[2] && hasTag[3] !== "\n" || hasTag[1] !== "\n" && hasTag[2] === void 0) {
+            token.content += "\n";
+          }
+        } else if (blueskyContMatch) {
+          let addedCont = "";
+          let j = n + 1;
+          let hasEndBlockquote = true;
+          while (j < state.tokens.length) {
+            const nextToken2 = state.tokens[j];
+            if (nextToken2.type === "inline" && /<\/blockquote> *<script[^>]*?><\/script>$/.test(nextToken2.content)) {
+              addedCont += nextToken2.content + "\n";
+              if (state.tokens[j + 1] && state.tokens[j + 1].type === "paragraph_close") {
+                state.tokens.splice(j + 1, 1);
+              }
+              state.tokens[j].content = "";
+              state.tokens[j].children.forEach((child, i) => {
+                child.content = "";
+              });
+              break;
+            }
+            if (nextToken2.type === "paragraph_open") {
+              addedCont += "\n";
+              state.tokens.splice(j, 1);
+              continue;
+            }
+            j++;
+          }
+          token.content += addedCont;
+          if (!hasEndBlockquote) {
+            ctj++;
+            continue;
+          }
         }
-        tagName = tags[ctj];
+        checkTokenTagName = tags[ctj];
         caption.name = tags[ctj];
         checkToken = true;
-        if (tagName === "blockquote") {
-          if (/^<[^>]*? class="(?:twitter-tweet|instagram-media|text-post-media|bluesky-embed)"/.test(token.content)) {
-            sp.isIframeTypeBlockQuote = true;
+        if (checkTokenTagName === "blockquote") {
+          const classNameReg = /^<[^>]*? class="(twitter-tweet|instagram-media|text-post-media|bluesky-embed|mastodon-embed)"/;
+          const isIframeTypeBlockquote = token.content.match(classNameReg);
+          if (isIframeTypeBlockquote) {
+            sp.isIframeTypeBlockquote = true;
           } else {
             ctj++;
             continue;
@@ -5748,43 +6215,17 @@ var figureWithCaption = (state, opt) => {
         n++;
         continue;
       }
-      if (tagName === "iframe") {
+      if (checkTokenTagName === "iframe") {
         if (/^<[^>]*? src="https:\/\/(?:www.youtube-nocookie.com|player.vimeo.com)\//i.test(token.content)) {
           sp.isVideoIframe = true;
         }
       }
-      if (sp.isIframeTypeBlockQuote) {
-        if (n > 2) {
-          if (state.tokens[n - 2].children) {
-            if (state.tokens[n - 2].children.length > 1) {
-              if (state.tokens[n - 2].children[1].attrs) {
-                if (state.tokens[n - 2].children[1].attrs[0][0] === "class") {
-                  if (state.tokens[n - 2].children[1].attrs[0][1] === "f-img-label") {
-                    sp.hasImgCaption = true;
-                  }
-                }
-              }
-            }
-          }
-        }
-        if (n + 2 < state.tokens.length) {
-          if (state.tokens[n + 2].children) {
-            if (state.tokens[n + 2].children.length > 1) {
-              if (state.tokens[n + 2].children[1].attrs) {
-                if (state.tokens[n + 2].children[1].attrs[0][0] === "class" && state.tokens[n + 2].children[1].attrs[0][1] === "f-img-label") {
-                  sp.hasImgCaption = true;
-                }
-              }
-            }
-          }
-        }
-      }
-      caption = checkCaption(state, n, en, caption);
-      if (caption.hasPrev || caption.hasNext) {
-        range = wrapWithFigure(state, range, tagName, caption, false, sp, opt);
+      checkCaption(state, n, en, caption, fNum, sp, opt);
+      if (caption.isPrev || caption.isNext) {
+        wrapWithFigure(state, range, checkTokenTagName, caption, false, sp, opt);
         n = en + 2;
-      } else if (opt.iframeWithoutCaption && tagName === "iframe" || opt.videoWithoutCaption && tagName === "video" || opt.iframeTypeBlockquoteWithoutCaption && tagName === "blockquote") {
-        range = wrapWithFigure(state, range, tagName, caption, false, sp, opt);
+      } else if (opt.iframeWithoutCaption && checkTokenTagName === "iframe" || opt.videoWithoutCaption && checkTokenTagName === "video" || opt.iframeTypeBlockquoteWithoutCaption && checkTokenTagName === "blockquote") {
+        wrapWithFigure(state, range, checkTokenTagName, caption, false, sp, opt);
         n = en + 2;
       }
     }
@@ -5861,17 +6302,17 @@ var figureWithCaption = (state, opt) => {
       }
       en = n + 2;
       range.end = en;
-      tagName = "img";
+      checkTokenTagName = "img";
       nextToken.children[0].type = "image";
-      if (opt.imgAltCaption) setAltToLabel(state, n, en, tagName, caption, opt);
-      if (opt.imgTitleCaption) setTitleToLabel(state, n, en, tagName, caption, opt);
-      caption = checkCaption(state, n, en, caption);
+      if (opt.imgAltCaption) setAltToLabel(state, n);
+      if (opt.imgTitleCaption) setTitleToLabel(state, n);
+      checkCaption(state, n, en, caption, fNum, sp, opt);
       if (opt.oneImageWithoutCaption && state.tokens[n - 1]) {
         if (state.tokens[n - 1].type === "list_item_open") checkToken = false;
       }
-      if (checkToken && (opt.oneImageWithoutCaption || caption.hasPrev || caption.hasNext)) {
-        if (caption.nameSuffix) tagName += caption.nameSuffix;
-        range = wrapWithFigure(state, range, tagName, caption, true, sp, opt);
+      if (checkToken && (opt.oneImageWithoutCaption || caption.isPrev || caption.isNext)) {
+        if (caption.nameSuffix) checkTokenTagName += caption.nameSuffix;
+        wrapWithFigure(state, range, checkTokenTagName, caption, true, sp, opt);
       }
     }
     if (!checkToken || !caption.name) {
@@ -5880,109 +6321,18 @@ var figureWithCaption = (state, opt) => {
     }
     n = range.start;
     en = range.end;
-    if (caption.hasPrev) {
-      changePrevCaptionPosition(state, n, caption);
+    if (caption.isPrev) {
+      changePrevCaptionPosition(state, n, caption, opt);
       n = en + 1;
       continue;
     }
-    if (caption.hasNext) {
+    if (caption.isNext) {
       changeNextCaptionPosition(state, en, caption);
       n = en + 4;
       continue;
     }
     n = en + 1;
   }
-  return;
-};
-var setAltToLabel = (state, n, en, tagName, caption, opt) => {
-  if (n < 2) return false;
-  if (state.tokens[n + 1].children[0].type !== "image" || !state.tokens[n - 2].children) return false;
-  if (state.tokens[n - 2].children[2]) {
-    state.tokens[n + 1].content = state.tokens[n + 1].content.replace(/^!\[.*?\]/, "![" + state.tokens[n - 2].children[2].content + "]");
-    if (!state.tokens[n + 1].children[0].children[0]) {
-      const textToken = new state.Token("text", "", 0);
-      state.tokens[n + 1].children[0].children.push(textToken);
-    }
-    state.tokens[n + 1].children[0].children[0].content = "";
-  }
-  state.tokens[n + 1].children[0].content = "";
-  return true;
-};
-var setTitleToLabel = (state, n, en, tagName, caption, opt) => {
-  if (n < 2) return false;
-  if (state.tokens[n + 1].children[0].type !== "image") return false;
-  if (!state.tokens[n - 2].children[0]) return false;
-  state.tokens[n + 1].children[0].attrSet("alt", state.tokens[n + 1].children[0].content);
-  if (!state.tokens[n + 1].children[0].children[0]) {
-    const textToken = new state.Token("text", "", 0);
-    state.tokens[n + 1].children[0].children.push(textToken);
-  }
-  let i = 0;
-  while (0 < state.tokens[n + 1].children[0].attrs.length) {
-    if (state.tokens[n + 1].children[0].attrs[i][0] === "title") {
-      state.tokens[n + 1].children[0].attrs.splice(i, i + 1);
-      break;
-    } else {
-      state.tokens[n + 1].children[0].attrJoin("title", "");
-    }
-    i++;
-  }
-  return true;
-};
-var imgAttrToPCaption = (state, startLine, opt) => {
-  let pos = state.bMarks[startLine] + state.tShift[startLine];
-  let max = state.eMarks[startLine];
-  let inline = state.src.slice(pos, max);
-  let label = "";
-  if (opt.imgAltCaption && typeof opt.imgAltCaption === "string") label = opt.imgAltCaption;
-  if (opt.imgTitleCaption && typeof opt.imgTitleCaption === "string") label = opt.imgTitleCaption;
-  let caption = "";
-  let imgAttrUsedCaption = "";
-  const img = inline.match(/^( *!\[)(.*?)\]\( *?((.*?)(?: +?\"(.*?)\")?) *?\)( *?\{.*?\})? *$/);
-  if (!img) return;
-  let hasLabel;
-  if (opt.imgAltCaption) {
-    caption = img[2];
-    hasLabel = img[2].match(new RegExp("^" + opt.imgAltCaption));
-    imgAttrUsedCaption = "alt";
-  }
-  if (opt.imgTitleCaption) {
-    if (!img[5]) img[5] = "";
-    caption = img[5];
-    hasLabel = img[5].match(new RegExp("^" + opt.imgTitleCaption));
-    imgAttrUsedCaption = "title";
-  }
-  let token;
-  token = state.push("paragraph_open", "p", 1);
-  token.map = [startLine, startLine + 1];
-  token = state.push("inline", "", 0);
-  if (hasLabel) {
-    token.content = caption;
-  } else {
-    if (!label) {
-      if (imgAttrUsedCaption === "alt") {
-        label = opt.imgAltCaption;
-      } else if (imgAttrUsedCaption === "title") {
-        label = opt.imgTitleCaption;
-      } else if (imgAttrUsedCaption) {
-        label = "Figure";
-      }
-    }
-    token.content = label;
-    if (/[a-zA-Z]/.test(label)) {
-      token.content += ".";
-      if (caption) token.content += " ";
-    } else {
-      token.content += "\u3000";
-    }
-    token.content += caption;
-  }
-  token.map = [startLine, startLine + 1];
-  token.children = [];
-  if (caption.length === 0) {
-    token.attrs = [["class", "nocaption"]];
-  }
-  token = state.push("paragraph_close", "p", -1);
   return;
 };
 var mditFigureWithPCaption = (md, option) => {
@@ -6003,32 +6353,28 @@ var mditFigureWithPCaption = (md, option) => {
     iframeTypeBlockquoteWithoutCaption: false,
     removeUnnumberedLabel: false,
     removeUnnumberedLabelExceptMarks: [],
+    removeMarkNameInCaptionClass: false,
     multipleImages: true,
     imgAltCaption: false,
+    setFigureNumber: false,
     imgTitleCaption: false,
-    roleDocExample: false
+    roleDocExample: false,
+    allIframeTypeFigureClassName: ""
   };
-  if (option !== void 0) {
-    for (let o in option) {
-      opt[o] = option[o];
-    }
-  }
+  if (option) Object.assign(opt, option);
   if (opt.imgAltCaption || opt.imgTitleCaption) {
+    opt.oneImageWithoutCaption = true;
+    opt.multipleImages = false;
+    if (opt.setFigureNumber) {
+      for (let mark of opt.removeUnnumberedLabelExceptMarks) {
+        if (mark === "img") opt.removeUnnumberedLabelExceptMarks.splice(opt.removeUnnumberedLabelExceptMarks.indexOf(mark), 1);
+        if (mark === "table") opt.removeUnnumberedLabelExceptMarks.splice(opt.removeUnnumberedLabelExceptMarks.indexOf(mark), 1);
+      }
+    }
     md.block.ruler.before("paragraph", "img_attr_caption", (state) => {
       imgAttrToPCaption(state, state.line, opt);
     });
   }
-  md.use(p7d_markdown_it_p_captions_default, {
-    classPrefix: opt.classPrefix,
-    dquoteFilename: opt.dquoteFilename,
-    strongFilename: opt.strongFilename,
-    hasNumClass: opt.hasNumClass,
-    bLabel: opt.bLabel,
-    strongLabel: opt.strongLabel,
-    jointSpaceUseHalfWidth: opt.jointSpaceUseHalfWidth,
-    removeUnnumberedLabel: opt.removeUnnumberedLabel,
-    removeUnnumberedLabelExceptMarks: opt.removeUnnumberedLabelExceptMarks
-  });
   md.core.ruler.before("replacements", "figure_with_caption", (state) => {
     figureWithCaption(state, opt);
   });
@@ -6044,19 +6390,44 @@ var fenceStartTag = (tagName, sAttr) => {
   }
   return tag + ">";
 };
-var splitFenceBlockToLines = (token, content) => {
+var parseEmphasizeLines = (attrValue) => {
+  const lines = [];
+  let s, e;
+  attrValue.split(",").forEach((range) => {
+    if (range.includes("-")) {
+      [s, e] = range.split("-").map((n) => parseInt(n.trim(), 10));
+      lines.push([s, e]);
+    } else {
+      s = parseInt(range.trim(), 10);
+      lines.push([s, s]);
+    }
+  });
+  return lines;
+};
+var splitFenceBlockToLines = (content, emphasizeLines, opt, hasPreLineStart) => {
   const br = content.match(/\r?\n/);
-  const lines = content.split(/r?\n/);
+  const lines = content.split(/\r?\n/);
   lines.map((line, n) => {
-    const lastElementTag = line.match(/<(\w+)( +[^>]*?)>[^>]*?(<\/\1>)?[^>]*?$/);
-    if (lastElementTag && !lastElementTag[3]) {
-      line += "</span>";
-      if (n < lines.length - 2) {
-        lines[n + 1] = `<${lastElementTag[1]}${lastElementTag[2]}>` + lines[n + 1];
+    if (opt.setLineNumber && hasPreLineStart) {
+      const lastElementTag = line.match(/<(\w+)( +[^>]*?)>[^>]*?(<\/\1>)?[^>]*?$/);
+      if (lastElementTag && !lastElementTag[3]) {
+        line += "</span>";
+        if (n < lines.length - 2) {
+          lines[n + 1] = `<${lastElementTag[1]}${lastElementTag[2]}>` + lines[n + 1];
+        }
+      }
+      if (n < lines.length - 1) {
+        lines[n] = '<span class="pre-line">' + line + "</span>";
       }
     }
-    if (n < lines.length - 1) {
-      lines[n] = '<span class="pre-line">' + line + "</span>";
+    if (opt.setEmphasizeLines && emphasizeLines.length > 0) {
+      if (emphasizeLines[0][0] === n + 1) {
+        lines[n] = `<span class="pre-lines-emphasis">${lines[n]}`;
+      }
+      if (emphasizeLines[0][1] === n) {
+        lines[n] = "</span>" + lines[n];
+        emphasizeLines.shift();
+      }
     }
   });
   return lines.join(br);
@@ -6067,7 +6438,6 @@ var setInfoAttr = (infoAttr) => {
   for (let attrSet of attrSets) {
     const str = attrSet.match(/^(?:([.#])(.+)|(.+?)(?:=("')?(.*?)\1?)?)$/);
     if (str) {
-      console.log(str);
       if (str[1] === ".") str[1] = "class";
       if (str[1] === "#") str[1] = "id";
       if (str[3]) {
@@ -6083,6 +6453,7 @@ var getFenceHtml = (tokens, idx, env, slf, md, options) => {
   const opt = {
     setHighlight: true,
     setLineNumber: true,
+    setEmphasizeLines: true,
     langPrefix: "language-",
     highlight: null
   };
@@ -6098,6 +6469,7 @@ var getFenceHtml = (tokens, idx, env, slf, md, options) => {
   let sAttr = { id: [], clas: [], data: [], style: [], other: [] };
   let hasPreLineStart = false;
   let preLineStart = -1;
+  let emphasizeLines = [];
   if (token.attrs) {
     for (let attr of token.attrs) {
       if (attr[0] === "id") {
@@ -6114,6 +6486,8 @@ var getFenceHtml = (tokens, idx, env, slf, md, options) => {
           attr[0] = "data-pre-start";
         }
         sAttr.data.push(attr);
+      } else if (/^em(?:phasize)?-lines$/.test(attr[0])) {
+        emphasizeLines = parseEmphasizeLines(attr[1]);
       } else if (attr[0] === "style") {
         sAttr.style.push(attr);
       } else {
@@ -6131,15 +6505,15 @@ var getFenceHtml = (tokens, idx, env, slf, md, options) => {
   }
   if (opt.setHighlight && md.options.highlight) {
     if (lang && lang !== "samp") {
-      content = md.options.highlight(token.content, lang);
+      content = md.options.highlight(content, lang);
     } else {
       content = md.utils.escapeHtml(token.content);
     }
   } else {
     content = md.utils.escapeHtml(token.content);
   }
-  if (opt.setLineNumber && hasPreLineStart) {
-    content = splitFenceBlockToLines(token, content);
+  if (opt.setLineNumber || opt.setEmphasizeLines) {
+    content = splitFenceBlockToLines(content, emphasizeLines, opt, hasPreLineStart);
   }
   let fenceHtml = "<pre>";
   let isSamp = /^(?:samp|shell|console)$/.test(lang);
@@ -6332,27 +6706,27 @@ var setMarkdownFigureNum = (markdown, option) => {
       opt[o] = option[o];
     }
   }
-  const markAfterNum = "[A-Z0-9]{1,6}(?:[.-][A-Z0-9]{1,6}){0,5}";
-  const joint = "[.:\uFF0E\u3002\uFF1A\u3000]";
-  const jointFullWidth = "[\uFF0E\u3002\uFF1A\u3000]";
-  const jointHalfWidth = "[.:]";
-  const markAfterEn = "(?: *(?:" + jointHalfWidth + "(?:(?=[ ]+)|$)|" + jointFullWidth + "|(?=[ ]+[^0-9a-zA-Z]))| *(" + markAfterNum + ")(?:" + jointHalfWidth + "(?:(?=[ ]+)|$)|" + jointFullWidth + "|(?=[ ]+[^a-z])|$)|[.](" + markAfterNum + ")(?:" + joint + "|(?=[ ]+[^a-z])|$)|[ \u3000]*$)";
-  const markAfterJa = "(?: *(?:" + jointHalfWidth + "(?:(?=[ ]+)|$)|" + jointFullWidth + "|(?=[ ]+))| *(" + markAfterNum + ")(?:" + jointHalfWidth + "(?:(?=[ ]+)|$)|" + jointFullWidth + "|(?=[ ]+)|$)|[ \u3000]*$)";
-  const markReg = {
+  const markAfterNum2 = "[A-Z0-9]{1,6}(?:[.-][A-Z0-9]{1,6}){0,5}";
+  const joint2 = "[.:\uFF0E\u3002\uFF1A\u3000]";
+  const jointFullWidth2 = "[\uFF0E\u3002\uFF1A\u3000]";
+  const jointHalfWidth2 = "[.:]";
+  const markAfterEn2 = "(?: *(?:" + jointHalfWidth2 + "(?:(?=[ ]+)|$)|" + jointFullWidth2 + "|(?=[ ]+[^0-9a-zA-Z]))| *(" + markAfterNum2 + ")(?:" + jointHalfWidth2 + "(?:(?=[ ]+)|$)|" + jointFullWidth2 + "|(?=[ ]+[^a-z])|$)|[.](" + markAfterNum2 + ")(?:" + joint2 + "|(?=[ ]+[^a-z])|$)|[ \u3000]*$)";
+  const markAfterJa2 = "(?: *(?:" + jointHalfWidth2 + "(?:(?=[ ]+)|$)|" + jointFullWidth2 + "|(?=[ ]+))| *(" + markAfterNum2 + ")(?:" + jointHalfWidth2 + "(?:(?=[ ]+)|$)|" + jointFullWidth2 + "|(?=[ ]+)|$)|[ \u3000]*$)";
+  const markReg2 = {
     //fig(ure)?, illust, photo
-    "img": new RegExp("^(?:(?:[fF][iI][gG](?:[uU][rR][eE])?|[iI][lL]{2}[uU][sS][tT]|[pP][hH][oO][tT][oO])" + markAfterEn + "|(?:\u56F3|\u30A4\u30E9\u30B9\u30C8|\u5199\u771F)" + markAfterJa + ")"),
+    "img": new RegExp("^(?:(?:[fF][iI][gG](?:[uU][rR][eE])?|[iI][lL]{2}[uU][sS][tT]|[pP][hH][oO][tT][oO])" + markAfterEn2 + "|(?:\u56F3|\u30A4\u30E9\u30B9\u30C8|\u5199\u771F)" + markAfterJa2 + ")"),
     //movie, video
-    "video": new RegExp("^(?:(?:[mM][oO][vV][iI][eE]|[vV][iI][dD][eE][oO])" + markAfterEn + "|(?:\u52D5\u753B|\u30D3\u30C7\u30AA)" + markAfterJa + ")"),
+    "video": new RegExp("^(?:(?:[mM][oO][vV][iI][eE]|[vV][iI][dD][eE][oO])" + markAfterEn2 + "|(?:\u52D5\u753B|\u30D3\u30C7\u30AA)" + markAfterJa2 + ")"),
     //table
-    "table": new RegExp("^(?:(?:[tT][aA][bB][lL][eE])" + markAfterEn + "|(?:\u8868)" + markAfterJa + ")"),
+    "table": new RegExp("^(?:(?:[tT][aA][bB][lL][eE])" + markAfterEn2 + "|(?:\u8868)" + markAfterJa2 + ")"),
     //code(block)?, program
-    "pre-code": new RegExp("^(?:(?:[cC][oO][dD][eE](?:[bB][lL][oO][cC][kK])?|[pP][rR][oO][gG][rR][aA][mM]|[aA][lL][gG][oO][rR][iI][tT][hH][mM])" + markAfterEn + "|(?:(?:\u30BD\u30FC\u30B9)?\u30B3\u30FC\u30C9|\u30EA\u30B9\u30C8|\u547D\u4EE4|\u30D7\u30ED\u30B0\u30E9\u30E0|\u7B97\u8B5C|\u30A2\u30EB\u30B4\u30EA\u30BA\u30E0|\u7B97\u6CD5)" + markAfterJa + ")"),
+    "pre-code": new RegExp("^(?:(?:[cC][oO][dD][eE](?:[bB][lL][oO][cC][kK])?|[pP][rR][oO][gG][rR][aA][mM]|[aA][lL][gG][oO][rR][iI][tT][hH][mM])" + markAfterEn2 + "|(?:(?:\u30BD\u30FC\u30B9)?\u30B3\u30FC\u30C9|\u30EA\u30B9\u30C8|\u547D\u4EE4|\u30D7\u30ED\u30B0\u30E9\u30E0|\u7B97\u8B5C|\u30A2\u30EB\u30B4\u30EA\u30BA\u30E0|\u7B97\u6CD5)" + markAfterJa2 + ")"),
     //terminal, prompt, command
-    "pre-samp": new RegExp("^(?:(?:[cC][oO][nN][sS][oO][lL][eE]|[tT][eE][rR][mM][iI][nN][aA][lL]|[pP][rR][oO][mM][pP][tT]|[cC][oO][mM]{2}[aA][nN][dD])" + markAfterEn + "|(?:\u7AEF\u672B|\u30BF\u30FC\u30DF\u30CA\u30EB|\u30B3\u30DE\u30F3\u30C9|(?:\u30B3\u30DE\u30F3\u30C9)?\u30D7\u30ED\u30F3\u30D7\u30C8)" + markAfterJa + ")"),
+    "pre-samp": new RegExp("^(?:(?:[cC][oO][nN][sS][oO][lL][eE]|[tT][eE][rR][mM][iI][nN][aA][lL]|[pP][rR][oO][mM][pP][tT]|[cC][oO][mM]{2}[aA][nN][dD])" + markAfterEn2 + "|(?:\u7AEF\u672B|\u30BF\u30FC\u30DF\u30CA\u30EB|\u30B3\u30DE\u30F3\u30C9|(?:\u30B3\u30DE\u30F3\u30C9)?\u30D7\u30ED\u30F3\u30D7\u30C8)" + markAfterJa2 + ")"),
     //quote, blockquote, source
-    "blockquote": new RegExp("^(?:(?:(?:[bB][lL][oO][cC][kK])?[qQ][uU][oO][tT][eE]|[sS][oO][uU][rR][cC][eE])" + markAfterEn + "|(?:\u5F15\u7528(?:\u5143)?|\u51FA\u5178)" + markAfterJa + ")"),
+    "blockquote": new RegExp("^(?:(?:(?:[bB][lL][oO][cC][kK])?[qQ][uU][oO][tT][eE]|[sS][oO][uU][rR][cC][eE])" + markAfterEn2 + "|(?:\u5F15\u7528(?:\u5143)?|\u51FA\u5178)" + markAfterJa2 + ")"),
     //slide
-    "slide": new RegExp("^(?:(?:[sS][lL][iI][dD][eE])" + markAfterEn + "|(?:\u30B9\u30E9\u30A4\u30C9)" + markAfterJa + ")")
+    "slide": new RegExp("^(?:(?:[sS][lL][iI][dD][eE])" + markAfterEn2 + "|(?:\u30B9\u30E9\u30A4\u30C9)" + markAfterJa2 + ")")
   };
   const label = (hasMarkLabel, counter2, isAlt) => {
     let label2 = hasMarkLabel[0];
@@ -6364,12 +6738,12 @@ var setMarkdownFigureNum = (markdown, option) => {
     if (hasMarkLabel[3]) {
       label2 = hasMarkLabel[0].replace(new RegExp(hasMarkLabel[3] + "$"), "");
     }
-    let isLabelLastJoint = label2.match(new RegExp("(" + joint + ")$"));
+    let isLabelLastJoint = label2.match(new RegExp("(" + joint2 + ")$"));
     if (isLabelLastJoint) {
       if (isAlt) {
-        label2 = label2.replace(new RegExp(joint + "$"), "") + spaceBeforeCounter + counter2;
+        label2 = label2.replace(new RegExp(joint2 + "$"), "") + spaceBeforeCounter + counter2;
       } else {
-        label2 = label2.replace(new RegExp(joint + "$"), "") + spaceBeforeCounter + counter2 + isLabelLastJoint[1];
+        label2 = label2.replace(new RegExp(joint2 + "$"), "") + spaceBeforeCounter + counter2 + isLabelLastJoint[1];
       }
     } else {
       label2 += counter2;
@@ -6455,8 +6829,8 @@ var setMarkdownFigureNum = (markdown, option) => {
       n++;
       continue;
     }
-    for (let mark of Object.keys(markReg)) {
-      const hasMarkLabel = lines[n].match(markReg[mark]);
+    for (let mark of Object.keys(markReg2)) {
+      const hasMarkLabel = lines[n].match(markReg2[mark]);
       if (hasMarkLabel && opt[mark]) {
         counter[mark]++;
         lines[n] = lines[n].replace(new RegExp("^([ 	]*)" + hasMarkLabel[0]), "$1" + label(hasMarkLabel, counter[mark]));
@@ -6553,27 +6927,27 @@ var setMarkdownImgAttrToPCaption = (markdown, option) => {
   return markdown;
 };
 var modLines = (n, lines, br, opt) => {
-  const markAfterNum = "[A-Z0-9]{1,6}(?:[.-][A-Z0-9]{1,6}){0,5}";
-  const joint = "[.:\uFF0E\u3002\uFF1A\u3000]";
-  const jointFullWidth = "[\uFF0E\u3002\uFF1A\u3000]";
-  const jointHalfWidth = "[.:]";
-  const markAfterEn = "(?: *(?:" + jointHalfWidth + "(?:(?=[ ]+)|$)|" + jointFullWidth + "|(?=[ ]+[^0-9a-zA-Z]))| *(" + markAfterNum + ")(?:" + jointHalfWidth + "(?:(?=[ ]+)|$)|" + jointFullWidth + "|(?=[ ]+[^a-z])|$)|[.](" + markAfterNum + ")(?:" + joint + "|(?=[ ]+[^a-z])|$))";
-  const markAfterJa = "(?: *(?:" + jointHalfWidth + "(?:(?=[ ]+)|$)|" + jointFullWidth + "|(?=[ ]+))| *(" + markAfterNum + ")(?:" + jointHalfWidth + "(?:(?=[ ]+)|$)|" + jointFullWidth + "|(?=[ ]+)|$))";
+  const markAfterNum2 = "[A-Z0-9]{1,6}(?:[.-][A-Z0-9]{1,6}){0,5}";
+  const joint2 = "[.:\uFF0E\u3002\uFF1A\u3000]";
+  const jointFullWidth2 = "[\uFF0E\u3002\uFF1A\u3000]";
+  const jointHalfWidth2 = "[.:]";
+  const markAfterEn2 = "(?: *(?:" + jointHalfWidth2 + "(?:(?=[ ]+)|$)|" + jointFullWidth2 + "|(?=[ ]+[^0-9a-zA-Z]))| *(" + markAfterNum2 + ")(?:" + jointHalfWidth2 + "(?:(?=[ ]+)|$)|" + jointFullWidth2 + "|(?=[ ]+[^a-z])|$)|[.](" + markAfterNum2 + ")(?:" + joint2 + "|(?=[ ]+[^a-z])|$))";
+  const markAfterJa2 = "(?: *(?:" + jointHalfWidth2 + "(?:(?=[ ]+)|$)|" + jointFullWidth2 + "|(?=[ ]+))| *(" + markAfterNum2 + ")(?:" + jointHalfWidth2 + "(?:(?=[ ]+)|$)|" + jointFullWidth2 + "|(?=[ ]+)|$))";
   const labelEn = "(?:[fF][iI][gG](?:[uU][rR][eE])?|[iI][lL]{2}[uU][sS][tT]|[pP][hH][oO][tT][oO])";
   const labelJa = "(?:\u56F3|\u30A4\u30E9\u30B9\u30C8|\u5199\u771F)";
-  const markReg = {
+  const markReg2 = {
     //fig(ure)?, illust, photo
-    "img": new RegExp("^(?:" + labelEn + markAfterEn + "|" + labelJa + markAfterJa + ")")
+    "img": new RegExp("^(?:" + labelEn + markAfterEn2 + "|" + labelJa + markAfterJa2 + ")")
   };
   const markRegWithNoJoint = {
-    "img": new RegExp("^(" + labelEn + "|" + labelJa + ")([ .]?" + markAfterNum + ")?$")
+    "img": new RegExp("^(" + labelEn + "|" + labelJa + ")([ .]?" + markAfterNum2 + ")?$")
   };
   let reg = /^([ \t]*?)!\[ *?(.*?) *?\]\(([^ ]*?)( +"(.*?)")?\)( *(?:{.*?})?)$/;
   const imgLine = lines[n].match(reg);
   if (!imgLine) return lines[n];
   let hasLabel;
-  if (opt.imgAltCaption) hasLabel = imgLine[2].match(new RegExp(markReg.img));
-  if (opt.imgTitleCaption) hasLabel = imgLine[5].match(new RegExp(markReg.img));
+  if (opt.imgAltCaption) hasLabel = imgLine[2].match(new RegExp(markReg2.img));
+  if (opt.imgTitleCaption) hasLabel = imgLine[5].match(new RegExp(markReg2.img));
   let hasLabelWithNoJoint;
   if (opt.imgAltCaption) hasLabelWithNoJoint = imgLine[2].match(new RegExp(markRegWithNoJoint.img));
   if (opt.imgTitleCaption) hasLabelWithNoJoint = imgLine[5].match(new RegExp(markRegWithNoJoint.img));
@@ -6593,7 +6967,7 @@ var modLines = (n, lines, br, opt) => {
     } else if (opt.imgTitleCaption) {
       lines[n] += imgLine[5];
     }
-    lines[n] += br + br + imgLine[1] + "![" + hasLabelWithNoJoint[0].replace(new RegExp(joint + "$")) + "]";
+    lines[n] += br + br + imgLine[1] + "![" + hasLabelWithNoJoint[0].replace(new RegExp(joint2 + "$")) + "]";
   } else {
     if (opt.labelLang === "ja") {
       if (opt.imgAltCaption) {
@@ -6873,7 +7247,8 @@ function activate(context) {
       removeUnnumberedLabelExceptMarks: exOption.removeUnnumberedLabelExceptMarks,
       imgAltCaption: exOption.imgAltCaption,
       imgTitleCaption: exOption.imgTitleCaption,
-      roleDocExample: exOption.roleDocExample
+      roleDocExample: exOption.roleDocExample,
+      allIframeTypeFigureClassName: "f-embed"
     }).use(markdown_it_renderer_fence_default);
     if (!isMditAttrsLoaded(md)) {
       md.use(import_markdown_it_attrs.default);

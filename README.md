@@ -427,7 +427,7 @@ Notice. In the vscode markdown preview, a div[data-line] element is automaticall
 
 ### iframe/embed example
 
-If there is a caption paragraph, a iframe element is wrapped by figure element. Basically, `f-iframe` is assigned to the class attribute of the figure element. However, note that class attribute's value of the caption depends on the original caption label. (for now).
+If there is a caption paragraph, a iframe element is wrapped by figure element. Basically, for embedded type iframe and blockquote elements, when a figure element is attached, this extension adds `class="f-embed"` to the figure element.
 
 ```md
 Figure 1. A caption.
@@ -445,8 +445,8 @@ Slide. A caption.
 <figure class="i-frame">
 <figcaption><span class="f-img-label">Figure 1<span class="f-img-label-joint">.</span></span> A caption.</figcaption>
 <iframe>
-</iframe>
 ...
+</iframe>
 </figure>
 <figure class="f-iframe">
 <figcaption><span class="f-slide-label">Slide<span class="f-slide-label-joint">.</span></span> A caption.</figcaption>
@@ -463,14 +463,14 @@ If you want to wrap a iframe element without a caption in figure element, enable
 ```
 
 ```html
-<figure class="f-iframe">
+<figure class="f-embed">
 <iframe src="https://example.com/embed" class="mastodon-embed" style="max-width: 100%; border: 0" width="400" allowfullscreen="allowfullscreen"></iframe><script src="https://exapmle.com/embed.js" async="async"></script>
 </figure>
 ```
 
 #### Exceptional handling
 
-In the case of Youtube and Vimeo, `f-video` is used instead of `f-iframe`. And the video label caption can be used.
+In the case of Youtube and Vimeo, `f-embed` is used instead of `f-iframe`. And the video label caption can be used.
 
 ```md
 Video. A youtube.
@@ -479,7 +479,7 @@ Video. A youtube.
 ```
 
 ```html
-<figure class="f-video">
+<figure class="f-embed">
 <figcaption><span class="f-video-label">Video<span class="f-video-label-joint">.</span></span> A youtube.</figcaption>
 <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/XXXXXXXXXXX" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </figure>
@@ -487,7 +487,7 @@ Video. A youtube.
 
 Notice. In the case of Vimeo, the tag text for embed includes the p element in addition to the iframe element, but please delete it or replace it with a caption.
 
-In the case of X/Twitter, If a caption belonging to img such as "Figure" is used, `f-img` is used instead of `f-iframe`.
+In the case of X/Twitter, If a caption belonging to img such as "Figure" is used, `f-img` is used instead of `f-embed`.
 
 ```md
 Figure. Twitter Post.
@@ -496,7 +496,7 @@ Figure. Twitter Post.
 ```
 
 ```html
-<figure class="f-img">
+<figure class="f-embed">
 <figcaption><span class="f-img-label">Figure<span class="f-img-label-joint">.</span></span> Twitter Post.</figcaption>
 <blockquote class="twitter-tweet"><p lang="ja" dir="ltr">XXXXX <a href="https://t.co/XXXXX">https://t.co/XXXXX</a></p>&mdash; User (@twitter) <a href="https://twitter.com/UserID/status/XXXXX">August 4, 2022</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </figure>

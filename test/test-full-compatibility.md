@@ -8,7 +8,7 @@ imgTitleCaption: true
 Test focus:
 - imgAltCaption/imgTitleCaption enabled
 - caption parsing edge cases (titles, attributes, blockquote, existing figure)
-- rendererImage.resize default behavior
+- image.resize default behavior
 - displayUnnumberedLabelMarks default keeps blockquote labels
 - table/code caption handling
 -->
@@ -88,4 +88,6 @@ console.log('hello')
 ![図 Aaaaa](../docs/codeblock-with-emphasis-lines.jpg "resize: 100%")
 
 図1 ああ
+
+
 

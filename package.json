@@ -153,12 +153,7 @@
           "default": "",
           "description": "Comma-separated list of caption types to auto-number (img, table)."
         },
-        "p7dMarkdownItFigureWithPCaption.image.attributes.disabled": {
-          "type": "boolean",
-          "default": false,
-          "description": "No set attributes of image elements."
-        },
-        "p7dMarkdownItFigureWithPCaption.rendererImage.disabled": {
+        "p7dMarkdownItFigureWithPCaption.image.disabled": {
           "type": "boolean",
           "default": false,
           "description": "Disable markdown-it-renderer-image."
@@ -218,62 +213,62 @@
           "default": "",
           "description": "Class name for all iframe type figures. Empty uses the default: f-embed."
         },
-        "p7dMarkdownItFigureWithPCaption.rendererImage.scaleSuffix.disabled": {
+        "p7dMarkdownItFigureWithPCaption.image.scaleSuffix.disabled": {
           "type": "boolean",
           "default": false,
           "description": "Disable scale suffix handling in markdown-it-renderer-image."
         },
-        "p7dMarkdownItFigureWithPCaption.rendererImage.lazyLoad.disabled": {
+        "p7dMarkdownItFigureWithPCaption.image.lazyLoad.disabled": {
           "type": "boolean",
           "default": false,
           "description": "Disable adding loading=\"lazy\" to images."
         },
-        "p7dMarkdownItFigureWithPCaption.rendererImage.resize.disabled": {
+        "p7dMarkdownItFigureWithPCaption.image.resize.disabled": {
           "type": "boolean",
           "default": false,
           "description": "Disable title-based resize handling in markdown-it-renderer-image."
         },
-        "p7dMarkdownItFigureWithPCaption.rendererImage.asyncDecode": {
+        "p7dMarkdownItFigureWithPCaption.image.asyncDecode": {
           "type": "boolean",
           "default": false,
           "description": "Add decoding=\"async\" to images."
         },
-        "p7dMarkdownItFigureWithPCaption.rendererImage.resolveSrc": {
+        "p7dMarkdownItFigureWithPCaption.image.resolveSrc": {
           "type": "boolean",
           "default": false,
           "description": "Resolve final img src from frontmatter/urlImageBase."
         },
-        "p7dMarkdownItFigureWithPCaption.rendererImage.resizeHint.keepInTitle": {
+        "p7dMarkdownItFigureWithPCaption.image.resizeHint.keepInTitle": {
           "type": "boolean",
           "default": false,
           "description": "Keep resize hints in the title attribute. Default is false (hints are moved to data attributes)."
         },
-        "p7dMarkdownItFigureWithPCaption.rendererImage.resizeHint.dataAttribute": {
+        "p7dMarkdownItFigureWithPCaption.image.resizeHint.dataAttribute": {
           "type": "string",
           "default": "",
           "description": "Data attribute name to store resize hints when titles are removed. Empty lets the extension choose (data-img-resize for preview)."
         },
-        "p7dMarkdownItFigureWithPCaption.rendererImage.remoteSize.disabled": {
+        "p7dMarkdownItFigureWithPCaption.image.remoteSize.disabled": {
           "type": "boolean",
           "default": false,
           "description": "Disable remote image size detection."
         },
-        "p7dMarkdownItFigureWithPCaption.rendererFence.highlight.disabled": {
+        "p7dMarkdownItFigureWithPCaption.fence.highlight.disabled": {
           "type": "boolean",
           "default": false,
           "description": "Disable highlight() calls in markdown-it-renderer-fence."
         },
-        "p7dMarkdownItFigureWithPCaption.rendererFence.lineNumber.disabled": {
+        "p7dMarkdownItFigureWithPCaption.fence.lineNumber.disabled": {
           "type": "boolean",
           "default": false,
           "description": "Disable line number spans in markdown-it-renderer-fence."
         },
-        "p7dMarkdownItFigureWithPCaption.rendererFence.emphasizeLines.disabled": {
+        "p7dMarkdownItFigureWithPCaption.fence.emphasizeLines.disabled": {
           "type": "boolean",
           "default": false,
           "description": "Disable emphasize line ranges in markdown-it-renderer-fence."
         },
-        "p7dMarkdownItFigureWithPCaption.rendererFence.sampLang.unset": {
+        "p7dMarkdownItFigureWithPCaption.fence.sampLang.unset": {
           "type": "string",
           "default": "",
           "description": "Comma-separated list of languages to remove from the default samp list (samp always uses <samp>). Default list is shell,console."
@@ -313,3 +308,5 @@
     "esbuild": "^0.27.2"
   }
 }
+
+

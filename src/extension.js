@@ -61,8 +61,7 @@ export function activate(context) {
     'figure.roleDocExample',
     'figure.autoLabelNumber',
     'figure.autoLabelNumberSets',
-    'image.attributes.disabled',
-    'rendererImage.disabled',
+    'image.disabled',
     'figure.styleProcess.disabled',
     'label.numberClass',
     'label.useB',
@@ -74,18 +73,18 @@ export function activate(context) {
     'caption.body.wrap',
     'figure.multipleImages.disabled',
     'figure.class.iframe',
-    'rendererImage.scaleSuffix.disabled',
-    'rendererImage.lazyLoad.disabled',
-    'rendererImage.resize.disabled',
-    'rendererImage.asyncDecode',
-    'rendererImage.resolveSrc',
-    'rendererImage.resizeHint.keepInTitle',
-    'rendererImage.resizeHint.dataAttribute',
-    'rendererImage.remoteSize.disabled',
-    'rendererFence.highlight.disabled',
-    'rendererFence.lineNumber.disabled',
-    'rendererFence.emphasizeLines.disabled',
-    'rendererFence.sampLang.unset',
+    'image.scaleSuffix.disabled',
+    'image.lazyLoad.disabled',
+    'image.resize.disabled',
+    'image.asyncDecode',
+    'image.resolveSrc',
+    'image.resizeHint.keepInTitle',
+    'image.resizeHint.dataAttribute',
+    'image.remoteSize.disabled',
+    'fence.highlight.disabled',
+    'fence.lineNumber.disabled',
+    'fence.emphasizeLines.disabled',
+    'fence.sampLang.unset',
   ]
   const reloadRequiredConfigPaths = reloadRequiredConfigKeys.map(configPath)
 
@@ -205,24 +204,24 @@ export function activate(context) {
     }
 
     const checkImgExtensions = defaultImgExtensions
-    const disableRendererImage = config.get('rendererImage.disabled')
-    const notSetImageElementAttributes = config.get('image.attributes.disabled') || disableRendererImage
-    const keepResizeHintInTitle = Boolean(config.get('rendererImage.resizeHint.keepInTitle'))
+    const disableRendererImage = config.get('image.disabled')
+    const notSetImageElementAttributes = disableRendererImage
+    const keepResizeHintInTitle = Boolean(config.get('image.resizeHint.keepInTitle'))
     const autoHideResizeTitle = !keepResizeHintInTitle
-    const resizeEnabled = !config.get('rendererImage.resize.disabled')
-    const resizeDataAttrOption = config.get('rendererImage.resizeHint.dataAttribute')
+    const resizeEnabled = !config.get('image.resize.disabled')
+    const resizeDataAttrOption = config.get('image.resizeHint.dataAttribute')
     const resizeDataAttr = typeof resizeDataAttrOption === 'string' && resizeDataAttrOption.trim()
       ? resizeDataAttrOption.trim()
       : (autoHideResizeTitle && resizeEnabled && !notSetImageElementAttributes ? 'data-img-resize' : '')
     const urlImageBase = defaultUrlImageBase
     const outputUrlMode = defaultOutputUrlMode
-    const resolveSrc = config.get('rendererImage.resolveSrc') === true
+    const resolveSrc = config.get('image.resolveSrc') === true
 
     const rendererImageOptions = {
-      scaleSuffix: !config.get('rendererImage.scaleSuffix.disabled'),
-      lazyLoad: !config.get('rendererImage.lazyLoad.disabled'),
+      scaleSuffix: !config.get('image.scaleSuffix.disabled'),
+      lazyLoad: !config.get('image.lazyLoad.disabled'),
       resize: resizeEnabled,
-      asyncDecode: config.get('rendererImage.asyncDecode'),
+      asyncDecode: config.get('image.asyncDecode'),
       checkImgExtensions,
       resolveSrc,
       urlImageBase,
@@ -230,20 +229,20 @@ export function activate(context) {
       autoHideResizeTitle,
       resizeDataAttr,
       remoteTimeout: defaultRemoteTimeoutMs,
-      disableRemoteSize: config.get('rendererImage.remoteSize.disabled'),
+      disableRemoteSize: config.get('image.remoteSize.disabled'),
       cacheMax: defaultCacheMax,
       suppressErrors: defaultSuppressErrors,
       remoteMaxBytes: defaultRemoteMaxBytes,
     }
-    const unsetSampLangList = parseCommaList(config.get('rendererFence.sampLang.unset'))
+    const unsetSampLangList = parseCommaList(config.get('fence.sampLang.unset'))
     const unsetSampLangSet = new Set(unsetSampLangList.map((lang) => lang.toLowerCase()))
     const sampLangList = defaultSampLangList.filter((lang) => !unsetSampLangSet.has(lang.toLowerCase()))
     const sampLang = sampLangList.length > 0 ? sampLangList.join(',') : '__none__'
 
     const rendererFenceOptions = {
-      setHighlight: !config.get('rendererFence.highlight.disabled'),
-      setLineNumber: !config.get('rendererFence.lineNumber.disabled'),
-      setEmphasizeLines: !config.get('rendererFence.emphasizeLines.disabled'),
+      setHighlight: !config.get('fence.highlight.disabled'),
+      setLineNumber: !config.get('fence.lineNumber.disabled'),
+      setEmphasizeLines: !config.get('fence.emphasizeLines.disabled'),
       setLineEndSpan: 0,
       sampLang,
     }
@@ -372,7 +371,7 @@ export function activate(context) {
 
   const expandMarkdownItSetting = (md) => {
     if (md.__p7dPluginsApplied) return
-    if (!currentSettings.notSetImageElementAttributes && !currentSettings.disableRendererImage) {
+    if (!currentSettings.disableRendererImage) {
       md.use(mditRendererImage, currentSettings.rendererImageOptions)
     }
     md.use(mditFigureWithPCaption, currentSettings.figureOptions)
@@ -487,3 +486,5 @@ export function activate(context) {
 }
 
 export function deactivate() {}
+
+

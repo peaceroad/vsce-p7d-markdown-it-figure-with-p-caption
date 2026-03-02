@@ -215,9 +215,7 @@ A paragraph  ![](./docs/cat.jpg) A paragraph.
 <p>A paragraph <img src="./docs/cat.jpg" alt="A cat." loading="lazy" width="400" height="300">  A paragraph.</p>
 ```
 
-Notice. `p7dMarkdownItFigureWithPCaption.image.attributes.disabled`: Not set width, height, loading attributes of image element.
-
-Notice. `p7dMarkdownItFigureWithPCaption.rendererImage.disabled`: Disable markdown-it-renderer-image processing (also stops automatic image attribute updates).
+Notice. `p7dMarkdownItFigureWithPCaption.image.disabled`: Disable markdown-it-renderer-image processing (also stops automatic image attribute updates).
 
 #### Multiple image example
 
@@ -293,7 +291,7 @@ Notice. If you do not want to display the blockquote label, set `no-blockquote` 
 ### Code/Samp-block example
 
 The figure element has class attributes. `role="doc-example"` is added only when `p7dMarkdownItFigureWithPCaption.figure.roleDocExample` is `true`.
-If `samp` or `shell`, `console` is specified, the samp tag will be used. Highlight spans are emitted unless `p7dMarkdownItFigureWithPCaption.rendererFence.highlight.disabled` is enabled (uses VS Code's highlighter).
+If `samp` or `shell`, `console` is specified, the samp tag will be used. Highlight spans are emitted unless `p7dMarkdownItFigureWithPCaption.fence.highlight.disabled` is enabled (uses VS Code's highlighter).
 
 ~~~md
 Code 1. A codeblock caption.
@@ -519,9 +517,9 @@ Figure. Twitter Post.
 ## Modify image element attributes
 
 Image attributes are adjusted as follows by default.  
-If you do not want to modify img element attributes, enable option: `p7dMarkdownItFigureWithPCaption.image.attributes.disabled` or `p7dMarkdownItFigureWithPCaption.rendererImage.disabled`.
+If you do not want to modify img element attributes, enable option: `p7dMarkdownItFigureWithPCaption.image.disabled`.
 
-Notice. Remote image size detection depends on network access. You can disable it with `p7dMarkdownItFigureWithPCaption.rendererImage.remoteSize.disabled`.
+Notice. Remote image size detection depends on network access. You can disable it with `p7dMarkdownItFigureWithPCaption.image.remoteSize.disabled`.
 Notice. Local image size detection uses the markdown file path resolved by the extension. If it cannot resolve, resize by title may not apply.
 Notice. The preview uses DOM scripts to keep image attributes and figcaptions in sync during live edits, and they follow frontmatter settings when provided.
 Notice. Browser-side image probing in preview scripts is enabled for live resize updates in VS Code preview.
@@ -549,10 +547,10 @@ This is identified by `/[@._-]([0-9]+)(x|dpi|ppi)$/`.
 
 ### Resizing layout image by title attribute
 
-Notice. By default, resize hints in title are hidden (`rendererImage.resizeHint.keepInTitle: false`) and stored in `data-img-resize` (or `rendererImage.resizeHint.dataAttribute` if set). If you set `p7dMarkdownItFigureWithPCaption.rendererImage.resizeHint.keepInTitle` to `true`, resize hints stay in `title` and no resize data attribute is added automatically.
+Notice. By default, resize hints in title are hidden (`image.resizeHint.keepInTitle: false`) and stored in `data-img-resize` (or `image.resizeHint.dataAttribute` if set). If you set `p7dMarkdownItFigureWithPCaption.image.resizeHint.keepInTitle` to `true`, resize hints stay in `title` and no resize data attribute is added automatically.
 
 A image resize based on the value of the title attribute.
-The following output examples assume default runtime behavior (`rendererImage.resizeHint.keepInTitle: false`).
+The following output examples assume default runtime behavior (`image.resizeHint.keepInTitle: false`).
 
 ```md
 //image original size: 400x300.
@@ -650,10 +648,9 @@ Figure 3. emphasis lines in markdown preview
 - `p7dMarkdownItFigureWithPCaption.figure.wrapWithoutCaption.video.disabled`: Disable wrapping video elements without captions by figure elements.
 - `p7dMarkdownItFigureWithPCaption.figure.wrapWithoutCaption.audio.disabled`: Disable wrapping audio elements without captions by figure elements.
 - `p7dMarkdownItFigureWithPCaption.figure.wrapWithoutCaption.iframeBlockquote.disabled`: Disable wrapping iframe type blockquote elements without captions by figure elements.
-- `p7dMarkdownItFigureWithPCaption.image.attributes.disabled`: Do not set width/height/loading attributes on img elements.
-- `p7dMarkdownItFigureWithPCaption.rendererImage.disabled`: Disable markdown-it-renderer-image processing.
-- `p7dMarkdownItFigureWithPCaption.rendererImage.resize.disabled`: Disable title-based resize handling.
-- `p7dMarkdownItFigureWithPCaption.rendererImage.resizeHint.keepInTitle`: Keep resize hints in title (default: false). When false, hints are stored in `data-img-resize` or `rendererImage.resizeHint.dataAttribute`.
+- `p7dMarkdownItFigureWithPCaption.image.disabled`: Disable markdown-it-renderer-image processing.
+- `p7dMarkdownItFigureWithPCaption.image.resize.disabled`: Disable title-based resize handling.
+- `p7dMarkdownItFigureWithPCaption.image.resizeHint.keepInTitle`: Keep resize hints in title (default: false). When false, hints are stored in `data-img-resize` or `image.resizeHint.dataAttribute`.
 - `p7dMarkdownItFigureWithPCaption.command.caption.labelLang`: Command label language (`ja`/`en`).
 
 ### Advanced plugin options
@@ -661,11 +658,11 @@ Figure 3. emphasis lines in markdown preview
 This extension exposes the full option sets of the bundled markdown-it plugins. See each plugin README for behavior details.
 
 - `p7dMarkdownItFigureWithPCaption.figure.styleProcess.disabled`, `label.numberClass`, `label.useB`, `label.useStrong`, `label.prefixMarker`, `label.allowPrefixMarkerWithoutLabel`, `caption.body.wrap`, `figure.oneImageWithoutCaption.disabled`, `caption.class.removeMarkName`, `figure.multipleImages.disabled`, `figure.autoLabelNumber`, `figure.autoLabelNumberSets`, `figure.class.iframeBlockquote`, `figure.class.slide`, `figure.class.iframe`
-- `p7dMarkdownItFigureWithPCaption.rendererImage.*`: disabled, scaleSuffix.disabled, lazyLoad.disabled, resize.disabled, asyncDecode, resolveSrc, resizeHint.keepInTitle, resizeHint.dataAttribute, remoteSize.disabled
-- `p7dMarkdownItFigureWithPCaption.rendererFence.*`: highlight.disabled, lineNumber.disabled, emphasizeLines.disabled, sampLang.unset
+- `p7dMarkdownItFigureWithPCaption.image.*`: disabled, scaleSuffix.disabled, lazyLoad.disabled, resize.disabled, asyncDecode, resolveSrc, resizeHint.keepInTitle, resizeHint.dataAttribute, remoteSize.disabled
+- `p7dMarkdownItFigureWithPCaption.fence.*`: highlight.disabled, lineNumber.disabled, emphasizeLines.disabled, sampLang.unset
 - `p7dMarkdownItFigureWithPCaption.command.figureNumber.*`: img.disabled, table, setNumberAlt
 
-Notice. `p7dMarkdownItFigureWithPCaption.rendererImage.resolveSrc` is `false` by default in this extension. If you set it to `true`, image `src` can be resolved from frontmatter keys such as `url`, `urlimage`, `urlimagebase`, `lid`, and `lmd`.
+Notice. `p7dMarkdownItFigureWithPCaption.image.resolveSrc` is `false` by default in this extension. If you set it to `true`, image `src` can be resolved from frontmatter keys such as `url`, `urlimage`, `urlimagebase`, `lid`, and `lmd`.
 
 Notice. When you change the option, the screen will automatically reload, but if you don't hear it, restart VS Code once.
 
@@ -844,3 +841,5 @@ Figure 2. キャプション
 $ npm run build
 $ vsce package
 ```
+
+

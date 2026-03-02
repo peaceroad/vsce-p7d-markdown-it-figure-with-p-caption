@@ -1,6 +1,6 @@
 # Change Log
 
-## 0.7.0[2026/03/01]
+## 0.7.0 [2026/03/02]
 
 Highlights:
 
@@ -12,8 +12,8 @@ Highlights:
   - [@peaceroad/markown-figure-num-setting](https://www.npmjs.com/package/@peaceroad/markown-figure-num-setting)@0.2.0
 - Added preview live-sync scripts (`set-img-attribute.js`, `set-img-figure-caption.js`) and a frontmatter metadata bridge via `<meta name="markdown-frontmatter" ...>`.
 - Improved caption/code-block behavior alignment with updated renderer integration (including `em-lines` handling).
-- Resize-title behavior now uses `rendererImage.resizeHint.keepInTitle` (default `false`), so default behavior moves resize hints from `title` to `data-img-resize` (or `rendererImage.resizeHint.dataAttribute`).
-- Expanded and reorganized exposed options into structured namespaces (`caption.*`, `figure.*`, `image.*`, `label.*`, `rendererImage.*`, `rendererFence.*`, `command.*`).
+- Resize-title behavior now uses `image.resizeHint.keepInTitle` (default `false`), so default behavior moves resize hints from `title` to `data-img-resize` (or `image.resizeHint.dataAttribute`).
+- Expanded and reorganized exposed options into structured namespaces (`caption.*`, `figure.*`, `image.*`, `label.*`, `fence.*`, `command.*`).
 - Runtime baseline updated to VS Code `^1.90.0` (Node.js 20).
 - Build workflow improved with `vscode:prepublish` and `test:preview-scripts`.
 
@@ -27,12 +27,13 @@ Breaking / Migration (from 0.6.0):
   - `setFigureClassThatWrapsIframeTypeBlockquote` -> `figure.class.iframeBlockquote`
   - `setFigureClassThatWrapsSlides` -> `figure.class.slide`
   - `allIframeTypeFigureClassName` -> `figure.class.iframe`
-  - `noSetImageElementAttributes` -> `image.attributes.disabled`
+  - `noSetImageElementAttributes` -> `image.disabled`
   - `useImgAttrToPCaptionLabelLang` -> `command.caption.labelLang`
   - `figureNumber.*` -> `command.figureNumber.*`
-  - `rendererImage.keepResizeHintInTitle` -> `rendererImage.resizeHint.keepInTitle`
-  - `rendererImage.resizeDataAttr` -> `rendererImage.resizeHint.dataAttribute`
-  - `rendererFence.disableHighlight/disableLineNumber/disableEmphasizeLines` -> `rendererFence.highlight.disabled` / `rendererFence.lineNumber.disabled` / `rendererFence.emphasizeLines.disabled`
+  - `rendererImage.disabled` -> `image.disabled`
+  - `rendererImage.keepResizeHintInTitle` -> `image.resizeHint.keepInTitle`
+  - `rendererImage.resizeDataAttr` -> `image.resizeHint.dataAttribute`
+  - `rendererFence.disableHighlight/disableLineNumber/disableEmphasizeLines` -> `fence.highlight.disabled` / `fence.lineNumber.disabled` / `fence.emphasizeLines.disabled`
 - Type/default changes:
   - `label.unnumbered.displayMarks`: `array` -> comma-separated `string`
   - `caption.fromImgAlt` / `caption.fromImgTitle`: `string` -> `boolean|string` (default `false`)
@@ -43,6 +44,8 @@ Developer notes:
 
 - Fence renderer entry switched to `@peaceroad/markdown-it-renderer-fence/markup-highlight` for v0.5 compatibility.
 - For additional behavior details, see upstream package READMEs/changelogs.
+
+Note. 188
 
 ## 0.6.0 2025/03/05
 
@@ -161,3 +164,4 @@ There was extra code in @peaceroad/markdown-it-renderer-image@0.1.4. Update: 0.1
 ## 0.1.0 - 2021/08/04
 
 - Initial release
+

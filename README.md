@@ -2,24 +2,35 @@
 
 For a paragraph with a image/images only, or a table or a code block or a blockquote, video, iframe and by writing a caption paragraph immediately before or after, they are converted into the figure element with the figcaption element.
 
+## Default behavior (quick summary)
+
+- Caption paragraphs immediately before/after a block are used as figcaptions.
+- Image-only paragraphs are converted to figures even without caption paragraphs.
+- Auto caption detection from image alt/title is enabled by default. You can disable it with `p7dMarkdownItFigureWithPCaption.caption.autoDetection.disabled`.
+
 ## Process (Roughly)
 
 The process is as follows.
 
 1. Add width and height attributes, and loading="lazy" in img elements.
     - You can skip attribute processing of img elements with option.
-2. Check that the element: an image/images only paragraph, a table, a code block, a samp block ,and a video, a iframe.
+2. Check that the element: an image/images only paragraph, a table, a code block, a samp block, a video, an audio, an iframe.
 3. Check if this element has a caption paragraph immediately before or after it.
     - Even if there is no caption, if it is image only paragraph (and video/iframe element depending on the option), proceed to the next step.
+    - For images, auto caption detection from alt/title is enabled by default. You can disable it with `p7dMarkdownItFigureWithPCaption.caption.autoDetection.disabled`.
+    - Default (`caption.autoDetection.disabled: false`): if alt/title already has a caption label format (`Figure.`, `Figure 1.`, `図　`, etc.), it is promoted to figcaption even without a caption paragraph.
+      ```md
+      ![Figure. A cat.](./cat.jpg)
+      ![ALT](./cat.jpg "Figure. A cat.")
+      ```
+      If `caption.autoDetection.disabled: true`, these alt/title values are not promoted to figcaption.
     - At this point, a class attribute is attached to the determined caption and its label.
          - if caption label do not has label number, the label itself is deleted. (Except in case of blockquote caption label. This is default setting.)  
          This default label deletion process also occurs at the beginning of a normal paragraph. But if it's a general document, this shouldn't be a problem.
 4. If It has the caption paragraph, convert them to figure and figcaption element.
     - The class attribute etc. is attached to the figure element according to the caption label.
-5. If It is samp block (that is codeblock surrounded by ```` ```smap```` ~ ```` ``` ````), convert `<code>` to `<samp>`. 
+5. If It is samp block (that is codeblock surrounded by ```` ```samp```` ~ ```` ``` ````), convert `<code>` to `<samp>`. 
     - Although `samp` is specified, this conversion is applied even if `shell` or `console` is specified.
-
-Notice. If markdown-it-attrs has not been imported by any other plugin, it will be imported. This allows you to specify attributes of the block by writing `{.style}` at the end of the line, etc.
 
 ## Use
 
@@ -39,6 +50,7 @@ Table. The beginning string identified as a caption.
 | `pre-samp` | console, terminal, prompt, command, 端末, ターミナル, コマンド, コマンドプロンプト, プロンプト, リスト, 図 |
 | `blockquote` | source, quote, blockquote, 引用, 引用元, 出典 |
 | `slide` | slide, スライド |
+| `audio` | audio, sound, 音, 音声, 音楽, サウンド |
 
 In addition, a delimiter is required after these strings, and then one space is needed. If the delimiter string is a full-width character, half-width spaces only are allowed.
 
@@ -129,6 +141,7 @@ Code: Output HTML
 
 ![Figure](./docs/screenshot.jpg)
 
+
 Figure 1. VSCode with this plugin
 
 A caption paragraph can also be placed in the paragraph immediately following it.
@@ -159,8 +172,7 @@ A paragraph.
 ```html
 <p>A paragraph.</p>
 <figure class="f-img">
-<figcaption>VSCode with this plugin</figcaption>
-<img src="docs/cat.jpg" alt="A cat" loading="lazy" width="400" height="300">
+<img src="./fig1.jpg" alt="A cat" loading="lazy" width="400" height="300">
 </figure>
 <p>A paragraph.</p>
 ```
@@ -196,14 +208,16 @@ Figure. A caption.
 Inline image etc, all images set also attributes by this extensions.
 
 ```md
-A paragraph  ![](.docs/cat.jpg) A paragraph.
+A paragraph  ![](./docs/cat.jpg) A paragraph.
 ```
 
 ```html
 <p>A paragraph <img src="./docs/cat.jpg" alt="A cat." loading="lazy" width="400" height="300">  A paragraph.</p>
 ```
 
-Noitce. `p7dMarkdownItFigureWithPCaption.notSetImageElementAttributes`: Not set width, height, loading attributes of image element.
+Notice. `p7dMarkdownItFigureWithPCaption.image.attributes.disabled`: Not set width, height, loading attributes of image element.
+
+Notice. `p7dMarkdownItFigureWithPCaption.rendererImage.disabled`: Disable markdown-it-renderer-image processing (also stops automatic image attribute updates).
 
 #### Multiple image example
 
@@ -274,14 +288,14 @@ Source. A source.
 Of course, the source can be written just before blockquote.   
 (The same goes for code blocks, tables, etc.)
 
-Notice. If you do not want to display the blockquote label, delete `"blockquote"` in settings.json of setting option `p7dMarkdownItFigureWithPCaption.displayUnnumberedLabelMarks`.
+Notice. If you do not want to display the blockquote label, set `no-blockquote` (or `unblockquote`) in `p7dMarkdownItFigureWithPCaption.label.unnumbered.displayMarks`.
 
 ### Code/Samp-block example
 
-the figure element has class attribute and role="doc-example".
-If `samp` or `shell`, `console` is specified, the samp tag will be used. If you use `shell` and `console`, span elements for code highlighting will be set.
+The figure element has class attributes. `role="doc-example"` is added only when `p7dMarkdownItFigureWithPCaption.figure.roleDocExample` is `true`.
+If `samp` or `shell`, `console` is specified, the samp tag will be used. Highlight spans are emitted unless `p7dMarkdownItFigureWithPCaption.rendererFence.highlight.disabled` is enabled (uses VS Code's highlighter).
 
-~~~ {.language-md}
+~~~md
 Code 1. A codeblock caption.
 
 ```js
@@ -316,7 +330,7 @@ $ pwd
 </samp></pre>
 </figure>
 <figure class="f-pre-samp">
-<figcaption><span class="f-pre-samp-label">Terminal A<span class="f-pre-samp-label-joint">.</span></span> A terminal caption.</figcaption>
+<figcaption><span class="f-pre-samp-label">Terminal B<span class="f-pre-samp-label-joint">.</span></span> A terminal caption.</figcaption>
 <pre><samp class="language-shell"><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-built_in">pwd</span></span><span class="lineend-spacer"></span>
 /home/user
 </samp></pre>
@@ -325,7 +339,7 @@ $ pwd
 
 Of course, you can also do it without label numbers. (with default settings)
 
-~~~ {.language-md}
+~~~md
 Code. A codeblock caption.
 
 ```js
@@ -354,7 +368,7 @@ $ pwd
 </figure>
 ```
 
-**Notice.** In versions prior to 0.5, `role="doc-example"` was output to the figure element surrounding the code/samp block, but in 0.5, it is no longer output by default. If you want to output it, set the option `setRoleDocExample` to `true`.
+Notice. In versions prior to 0.5, `role="doc-example"` was output to the figure element surrounding the code/samp block, but in 0.5, it is no longer output by default. If you want to output it, set the option `figure.roleDocExample` to `true`.
 
 ### Table example
 
@@ -407,7 +421,7 @@ Video 1. A mp4.
 </figure>
 ```
 
-If you want to wrap a video element without a caption in figure element, enable the option: `p7dMarkdownItFigureWithPCaption.wrapVideoWithoutCaptionByFigure`
+If you do not want to wrap a video element without a caption in figure element, set: `p7dMarkdownItFigureWithPCaption.figure.wrapWithoutCaption.video.disabled`
 
 ```md
 <video controls width="400" height="300">
@@ -442,13 +456,13 @@ Slide. A caption.
 ```
 
 ```html
-<figure class="i-frame">
+<figure class="f-embed">
 <figcaption><span class="f-img-label">Figure 1<span class="f-img-label-joint">.</span></span> A caption.</figcaption>
 <iframe>
 ...
 </iframe>
 </figure>
-<figure class="f-iframe">
+<figure class="f-embed">
 <figcaption><span class="f-slide-label">Slide<span class="f-slide-label-joint">.</span></span> A caption.</figcaption>
 <iframe class="speakerdeck-iframe" style="..." src="https://speakerdeck.com/player/xxxxxxxxxxxxxx" title="xxxxxxxxxxx" allowfullscreen="true" data-ratio="1.78343949044586" frameborder="0"></iframe>
 </figure>
@@ -456,15 +470,15 @@ Slide. A caption.
 
 Notice. In the vscode markdown preview, a div[data-line] element is automatically inserted just before the iframe element. (This element is not present in HTML output.)
 
-If you want to wrap a iframe element without a caption in figure element, enable the option: `p7dMarkdownItFigureWithPCaption.wrapIframeWithoutCaptionByFigure`
+If you do not want to wrap a iframe element without a caption in figure element, set: `p7dMarkdownItFigureWithPCaption.figure.wrapWithoutCaption.iframe.disabled`
 
 ```md
-<iframe src="https://example.com/embed" class="mastodon-embed" style="max-width: 100%; border: 0" width="400" allowfullscreen="allowfullscreen"></iframe><script src="https://exapmle.com/embed.js" async="async"></script>
+<iframe src="https://example.com/embed" class="mastodon-embed" style="max-width: 100%; border: 0" width="400" allowfullscreen="allowfullscreen"></iframe><script src="https://example.com/embed.js" async="async"></script>
 ```
 
 ```html
 <figure class="f-embed">
-<iframe src="https://example.com/embed" class="mastodon-embed" style="max-width: 100%; border: 0" width="400" allowfullscreen="allowfullscreen"></iframe><script src="https://exapmle.com/embed.js" async="async"></script>
+<iframe src="https://example.com/embed" class="mastodon-embed" style="max-width: 100%; border: 0" width="400" allowfullscreen="allowfullscreen"></iframe><script src="https://example.com/embed.js" async="async"></script>
 </figure>
 ```
 
@@ -505,7 +519,12 @@ Figure. Twitter Post.
 ## Modify image element attributes
 
 Image attributes are adjusted as follows by default.  
-If you do not want to modify img element attributes, enable option: `p7dMarkdownItFigureWithPCaption.notSetImageElementAttributes`.
+If you do not want to modify img element attributes, enable option: `p7dMarkdownItFigureWithPCaption.image.attributes.disabled` or `p7dMarkdownItFigureWithPCaption.rendererImage.disabled`.
+
+Notice. Remote image size detection depends on network access. You can disable it with `p7dMarkdownItFigureWithPCaption.rendererImage.remoteSize.disabled`.
+Notice. Local image size detection uses the markdown file path resolved by the extension. If it cannot resolve, resize by title may not apply.
+Notice. The preview uses DOM scripts to keep image attributes and figcaptions in sync during live edits, and they follow frontmatter settings when provided.
+Notice. Browser-side image probing in preview scripts is enabled for live resize updates in VS Code preview.
 
 ### Adjusting image size by filename suffix
 
@@ -530,45 +549,48 @@ This is identified by `/[@._-]([0-9]+)(x|dpi|ppi)$/`.
 
 ### Resizing layout image by title attribute
 
+Notice. By default, resize hints in title are hidden (`rendererImage.resizeHint.keepInTitle: false`) and stored in `data-img-resize` (or `rendererImage.resizeHint.dataAttribute` if set). If you set `p7dMarkdownItFigureWithPCaption.rendererImage.resizeHint.keepInTitle` to `true`, resize hints stay in `title` and no resize data attribute is added automatically.
+
 A image resize based on the value of the title attribute.
+The following output examples assume default runtime behavior (`rendererImage.resizeHint.keepInTitle: false`).
 
 ```md
 //image original size: 400x300.
 
 ![A cat.](cat.jpg "Resize:50%")
 ↓
-<p><img src="cat.jpg" alt="A cat." loading="lazy" width="200" height="150"></p>
+<p><img src="cat.jpg" alt="A cat." loading="lazy" width="200" height="150" data-img-resize="50%"></p>
 
 ![A cat.](cat.jpg "リサイズ：50%")
 ↓
-<p><img src="cat.jpg" alt="A cat." loading="lazy" width="200" height="150"></p>
+<p><img src="cat.jpg" alt="A cat." loading="lazy" width="200" height="150" data-img-resize="50%"></p>
 
 ![A cat.](cat.jpg "サイズ変更：50%")
 ↓
-<p><img src="cat.jpg" alt="A cat." loading="lazy" width="200" height="150"></p>
+<p><img src="cat.jpg" alt="A cat." loading="lazy" width="200" height="150" data-img-resize="50%"></p>
 
 ![A cat.](cat.jpg "The shown photo have been resized to 50%.")
 ↓
-<p><img src="cat.jpg" alt="A cat." title="The shown photo have been resized to 50%." loading="lazy" width="200" height="150"></p>
+<p><img src="cat.jpg" alt="A cat." loading="lazy" width="200" height="150" data-img-resize="50%"></p>
 
 ![Figure](cat.jpg "resize:320px")
 ↓
-<p><img src="cat.jpg" alt="Figure" title="resize:320px" loading="lazy" width="320" height="240"></p>
+<p><img src="cat.jpg" alt="Figure" loading="lazy" width="320" height="240" data-img-resize="320px"></p>
 
 ![Figure](cat@2x.jpg "resize:320px")
 ↓
-<p><img src="cat@2x.jpg" alt="Figure" title="resize:320px" loading="lazy" width="320" height="240"></p>
+<p><img src="cat@2x.jpg" alt="Figure" loading="lazy" width="320" height="240" data-img-resize="320px"></p>
 ```
 
 This is identified by `imageTitleAttribute.match(/(?:(?:(?:大きさ|サイズ)の?変更|リサイズ|resize(?:d to)?)? *[:：]? *([0-9]+)([%％]|px)|([0-9]+)([%％]|px)に(?:(?:大きさ|サイズ)を?変更|リサイズ))/i)`
 
 If `px` is specified, the numerical value is treated as the width after resizing.
 
-## Dispaly Line number for code/samp block
+## Display line number for code/samp block
 
 You can add a `start` or `data-pre-start` attribute to a code/samp block to display line numbers for that block.
 
-~~~{.language-md}
+~~~md
 ```js {start="1"}
 import mdit from 'markdown-it'
 const md = mdit()
@@ -583,7 +605,7 @@ const htmlCont = md.render('Nyan.')
 </code></pre>
 ```
 
-![](./docs/codeblock-with-line-number.png)
+![](./docs/codeblock-with-line-number.jpg)
 
 Figure 2. Code block with Line number in markdown preview.
 
@@ -610,34 +632,52 @@ const htmlCont = md.render('Nyan.')
 </span></code></pre>
 ```
 
-![](./docs/codeblock-with-emphasis-lines.png)
+![](./docs/codeblock-with-emphasis-lines.jpg)
 
 Figure 3. emphasis lines in markdown preview
 
 ## Option
 
-- `p7dMarkdownItFigureWithPCaption.disableStyle`: Disable [defalt CSS:](https://github.com/peaceroad/vsce-p7d-markdown-it-figure-with-p-caption/blob/main/style/figure-with-p-caption.css) of this extension.
-- `p7dMarkdownItFigureWithPCaption.displayUnnumberedLabelMarks`: Display marks caption's unnumbered label. In that case, specify img, table, video, pre-code, pre-samp inside the array. ("blockquote" is set by default)
-- `p7dMarkdownItFigureWithPCaption.displayUnnumberedLabel`: Display all caption's unnumbered label. Overrides option: displayUnnumberedLabelMarks.
-- `p7dMarkdownItFigureWithPCaption.setDoubleQuoteFileName`: Set Filename. Part `"Filename"` of `Caption. "Filename" A text.` convert to `<strong class="f-pre-code-filename">Filename</strong>`.
-- `p7dMarkdownItFigureWithPCaption.setDoubleAsteriskFileName`: Set Filename. Part `**Filename**` of `Caption. **Filename** A text.` convert to `<strong class="f-pre-code-filename">Filename</strong>`.
-- `p7dMarkdownItFigureWithPCaption.convertJointSpaceToHalfWidth`: Convert full-width space to half-width space in label joint.
-- `p7dMarkdownItFigureWithPCaption.notSetImageElementAttributes`: Not set width, height, lazyload attributes of image element.
-- `p7dMarkdownItFigureWithPCaption.wrapIframeWithoutCaptionByFigure`: Wrap iframe element without a caption by figure element.
-- `p7dMarkdownItFigureWithPCaption.wrapVideoWithoutCaptionByFigure`: Wrap video element without a caption by figure element.
-- `p7dMarkdownItFigureWithPCaption.iframeTypeBlockquoteWithoutCaptionByFigure`: Wrap iframe type blockquote element without a caption by figure element
+### Core options (recommended for most users)
+
+- `p7dMarkdownItFigureWithPCaption.disableStyle`: Disable [default CSS:](https://github.com/peaceroad/vsce-p7d-markdown-it-figure-with-p-caption/blob/main/style/figure-with-p-caption.css) of this extension.
+- `p7dMarkdownItFigureWithPCaption.label.unnumbered.displayMarks`: Display marks caption's unnumbered label. Comma-separated list: img, table, video, pre-code, pre-samp. Blockquote is enabled by default; use no-blockquote or unblockquote to exclude it.
+- `p7dMarkdownItFigureWithPCaption.label.unnumbered.displayAll`: Display all caption's unnumbered label. Overrides option: label.unnumbered.displayMarks.
+- `p7dMarkdownItFigureWithPCaption.caption.autoDetection.disabled`: Disable automatic caption detection from image alt/title when no caption paragraph exists.
+- `p7dMarkdownItFigureWithPCaption.caption.fromImgAlt`: Auto caption from img alt text.
+- `p7dMarkdownItFigureWithPCaption.caption.fromImgTitle`: Auto caption from img title text.
+- `p7dMarkdownItFigureWithPCaption.figure.wrapWithoutCaption.iframe.disabled`: Disable wrapping iframe elements without captions by figure elements.
+- `p7dMarkdownItFigureWithPCaption.figure.wrapWithoutCaption.video.disabled`: Disable wrapping video elements without captions by figure elements.
+- `p7dMarkdownItFigureWithPCaption.figure.wrapWithoutCaption.audio.disabled`: Disable wrapping audio elements without captions by figure elements.
+- `p7dMarkdownItFigureWithPCaption.figure.wrapWithoutCaption.iframeBlockquote.disabled`: Disable wrapping iframe type blockquote elements without captions by figure elements.
+- `p7dMarkdownItFigureWithPCaption.image.attributes.disabled`: Do not set width/height/loading attributes on img elements.
+- `p7dMarkdownItFigureWithPCaption.rendererImage.disabled`: Disable markdown-it-renderer-image processing.
+- `p7dMarkdownItFigureWithPCaption.rendererImage.resize.disabled`: Disable title-based resize handling.
+- `p7dMarkdownItFigureWithPCaption.rendererImage.resizeHint.keepInTitle`: Keep resize hints in title (default: false). When false, hints are stored in `data-img-resize` or `rendererImage.resizeHint.dataAttribute`.
+- `p7dMarkdownItFigureWithPCaption.command.caption.labelLang`: Command label language (`ja`/`en`).
+
+### Advanced plugin options
+
+This extension exposes the full option sets of the bundled markdown-it plugins. See each plugin README for behavior details.
+
+- `p7dMarkdownItFigureWithPCaption.figure.styleProcess.disabled`, `label.numberClass`, `label.useB`, `label.useStrong`, `label.prefixMarker`, `label.allowPrefixMarkerWithoutLabel`, `caption.body.wrap`, `figure.oneImageWithoutCaption.disabled`, `caption.class.removeMarkName`, `figure.multipleImages.disabled`, `figure.autoLabelNumber`, `figure.autoLabelNumberSets`, `figure.class.iframeBlockquote`, `figure.class.slide`, `figure.class.iframe`
+- `p7dMarkdownItFigureWithPCaption.rendererImage.*`: disabled, scaleSuffix.disabled, lazyLoad.disabled, resize.disabled, asyncDecode, resolveSrc, resizeHint.keepInTitle, resizeHint.dataAttribute, remoteSize.disabled
+- `p7dMarkdownItFigureWithPCaption.rendererFence.*`: highlight.disabled, lineNumber.disabled, emphasizeLines.disabled, sampLang.unset
+- `p7dMarkdownItFigureWithPCaption.command.figureNumber.*`: img.disabled, table, setNumberAlt
+
+Notice. `p7dMarkdownItFigureWithPCaption.rendererImage.resolveSrc` is `false` by default in this extension. If you set it to `true`, image `src` can be resolved from frontmatter keys such as `url`, `urlimage`, `urlimagebase`, `lid`, and `lmd`.
 
 Notice. When you change the option, the screen will automatically reload, but if you don't hear it, restart VS Code once.
 
 
-### Option to use image alt/tiltle as caption instead of paragraph caption
+### Option to use image alt/title as caption instead of paragraph caption
 
-- `p7dMarkdownItFigureWithPCaption.useImgAltCaption`: Use the alt attribute of the img element for the caption. Specify the text of the label. Example: "Figure" , "図"
-- `p7dMarkdownItFigureWithPCaption.useImgTitleCaption`: Use the title attribute of the img element for the caption. Specify the text of the label. Example: "Figure" , "図"
+- `p7dMarkdownItFigureWithPCaption.caption.fromImgAlt`: Auto caption from img alt text. Set true to use auto labels, or set a label string. Example: "Figure" , "図"
+- `p7dMarkdownItFigureWithPCaption.caption.fromImgTitle`: Auto caption from img title text. Set true to use auto labels, or set a label string. Example: "Figure" , "図"
 
 This allows the following transformation, which is a trade-off with the default behavior of writing the caption in the paragraph before it:
 
-### useImgAltCaption: "Figure"
+### caption.fromImgAlt: "Figure"
 
 ```md
 ![Figure 1. A caption.](example.jpg)
@@ -656,7 +696,7 @@ This allows the following transformation, which is a trade-off with the default 
 </figure>
 ```
 
-### useImgTitleCaption: "Figure"
+### caption.fromImgTitle: "Figure"
 
 ```md
 ![A alt text.](example.jpg "Figure 1. A caption.")
@@ -675,16 +715,16 @@ This allows the following transformation, which is a trade-off with the default 
 </figure>
 ```
 
-#### yaml frontmatter setting of imgAltCaption / imgTitleCaption (beta)
+#### yaml frontmatter setting of imgAltCaption / imgTitleCaption
 
-Notice. Beta feature. I made it so that the settings would be effective even if you wrote `imgAltCaption: "Figure"` or `imgTitleCaption: "Figure"` in yaml frontmatter of the Markdown file, but currently this setting is not read in real time and works. Therefore, if you write the setting in markdown file, you need to restart once.
+These values can also be set in the Markdown frontmatter as boolean flags. The preview scripts read the frontmatter and apply changes in real time, so you do not need to restart VS Code after editing the frontmatter.
 
 ```md
 ---
-imgAltCaption: "Figure"
+imgAltCaption: true
 ---
 
-![Figure 1. A Caption](example.jpg)
+![A Caption](example.jpg)
 ```
 
 ## Command
@@ -693,7 +733,7 @@ Often captions are written in the alt and title attributes of images. This plugi
 
 Also, to insert figure numbers, I included a command to assign consecutive numbers to the figure caption paragraphs from the top of the Markdown file.
 
-**Notice.** For now, it's a rough conversion. If you run the command twice in a row, the conversion results will be messed up.
+Notice. For now, it's a rough conversion. If you run the command twice in a row, the conversion results will be messed up.
 
 ### Command: setImgAltAttrToPCaption
 
@@ -701,124 +741,100 @@ Set markdown img alt attribute to caption's paragraph.
 
 ```md
 
-![キャプション](exampe.jpg)
+![キャプション](example.jpg)
 
 ↓
 
 図　キャプション
 
-![](exampe.jpg)
+![](example.jpg)
 ```
 
 ```md
 
-![図 キャプション](exampe.jpg)
+![図 キャプション](example.jpg)
 
 ↓
 
 図 キャプション
 
-![](exampe.jpg)
+![](example.jpg)
 ```
 
 ```md
-![Figure. A caption.](exampe.jpg)
+![Figure. A caption.](example.jpg)
 
 ↓
 
-Figure. A. caption.
+Figure. A caption.
 
-![](exampe.jpg)
+![](example.jpg)
 ```
 
-```md
----
-lang: "en"
----
-
-![A caption.](exampe.jpg)
-
-↓
-
-Figure. A. caption.
-
-![](exampe.jpg)
-```
-
-
-**Notice.** Or, if you set option `p7dMarkdownItFigureWithPCaption.useImgAttrToPCaptionLabelLang`  to `en`, `Figure` will be used as the label instead of `図`.
+Notice. The command label language is controlled by option
+`p7dMarkdownItFigureWithPCaption.command.caption.labelLang` (`ja`/`en`).
 
 ### Command: setImgTitleAttrToPCaption
 
 Markdown: Set img title attribute to caption's paragraph.
 
 ```md
-![ALT](exampe.jpg "キャプション")
+![ALT](example.jpg "キャプション")
 
 ↓
 
 図　キャプション
 
-![ALT](exampe.jpg)
+![ALT](example.jpg)
 ```
 
-```md
----
-lang: "en"
----
-
-![ALT](exampe.jpg "キャプション")
-
-↓
-
-Figure. キャプション
-
-![ALT](exampe.jpg)
-```
+Notice. The command label language is controlled by option
+`p7dMarkdownItFigureWithPCaption.command.caption.labelLang` (`ja`/`en`).
 
 ### Command: setFigureCaptionNumber
 
 Markdown: Set figure caption number.
+If you want to update image alt text with the numbered label, set `p7dMarkdownItFigureWithPCaption.command.figureNumber.setNumberAlt` to true.
 
 
 ```md
 図 キャプション
 
-![](exampe.jpg)
+![](example.jpg)
 
 図 キャプション
 
-![](exampe.jpg)
+![](example.jpg)
 
 ↓
 
 図1 キャプション
 
-![](exampe.jpg)
+![](example.jpg)
 
 図2 キャプション
 
-![](exampe.jpg)
+![](example.jpg)
 ```
 
 ```md
 Figure. キャプション
 
-![](exampe.jpg)
+![](example.jpg)
 
 Figure. キャプション
 
-![](exampe.jpg)
+![](example.jpg)
 
 ↓
 
 Figure 1. キャプション
 
-![](exampe.jpg)
+![](example.jpg)
 
 Figure 2. キャプション
 
-![](exampe.jpg)
+![](example.jpg)
 ```
 
 

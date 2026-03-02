@@ -1,5 +1,49 @@
 # Change Log
 
+## 0.7.0[2026/03/01]
+
+Highlights:
+
+- Upgraded core dependencies:
+  - [@peaceroad/markdown-it-figure-with-p-caption](https://www.npmjs.com/package/@peaceroad/markdown-it-figure-with-p-caption)@0.16.0
+  - [@peaceroad/markdown-it-renderer-image](https://www.npmjs.com/package/@peaceroad/markdown-it-renderer-image)@0.12.0
+  - [@peaceroad/markdown-it-renderer-fence](https://www.npmjs.com/package/@peaceroad/markdown-it-renderer-fence)@0.5.0
+  - [@peaceroad/markdown-imgattr-to-pcaption](https://www.npmjs.com/package/@peaceroad/markdown-imgattr-to-pcaption)@0.5.0
+  - [@peaceroad/markown-figure-num-setting](https://www.npmjs.com/package/@peaceroad/markown-figure-num-setting)@0.2.0
+- Added preview live-sync scripts (`set-img-attribute.js`, `set-img-figure-caption.js`) and a frontmatter metadata bridge via `<meta name="markdown-frontmatter" ...>`.
+- Improved caption/code-block behavior alignment with updated renderer integration (including `em-lines` handling).
+- Resize-title behavior now uses `rendererImage.resizeHint.keepInTitle` (default `false`), so default behavior moves resize hints from `title` to `data-img-resize` (or `rendererImage.resizeHint.dataAttribute`).
+- Expanded and reorganized exposed options into structured namespaces (`caption.*`, `figure.*`, `image.*`, `label.*`, `rendererImage.*`, `rendererFence.*`, `command.*`).
+- Runtime baseline updated to VS Code `^1.90.0` (Node.js 20).
+- Build workflow improved with `vscode:prepublish` and `test:preview-scripts`.
+
+Breaking / Migration (from 0.6.0):
+
+- This extension no longer auto-loads `markdown-it-attrs`.
+  - If you rely on `{.class}` / `{key=value}` syntax, enable `markdown-it-attrs` via another extension.
+  - Fence info attributes (for example `{start="1"}` / `{em-lines="2-3"}`) continue to work via `@peaceroad/markdown-it-renderer-fence`.
+- Renamed/inverted option keys (unreleased migration):
+  - `disableWrap...ByFigure` -> `figure.wrapWithoutCaption.*.disabled`
+  - `setFigureClassThatWrapsIframeTypeBlockquote` -> `figure.class.iframeBlockquote`
+  - `setFigureClassThatWrapsSlides` -> `figure.class.slide`
+  - `allIframeTypeFigureClassName` -> `figure.class.iframe`
+  - `noSetImageElementAttributes` -> `image.attributes.disabled`
+  - `useImgAttrToPCaptionLabelLang` -> `command.caption.labelLang`
+  - `figureNumber.*` -> `command.figureNumber.*`
+  - `rendererImage.keepResizeHintInTitle` -> `rendererImage.resizeHint.keepInTitle`
+  - `rendererImage.resizeDataAttr` -> `rendererImage.resizeHint.dataAttribute`
+  - `rendererFence.disableHighlight/disableLineNumber/disableEmphasizeLines` -> `rendererFence.highlight.disabled` / `rendererFence.lineNumber.disabled` / `rendererFence.emphasizeLines.disabled`
+- Type/default changes:
+  - `label.unnumbered.displayMarks`: `array` -> comma-separated `string`
+  - `caption.fromImgAlt` / `caption.fromImgTitle`: `string` -> `boolean|string` (default `false`)
+  - `command.caption.labelLang` default: `""` -> `"ja"`
+- Some low-level legacy settings were removed from `contributes.configuration` and fixed to internal defaults.
+
+Developer notes:
+
+- Fence renderer entry switched to `@peaceroad/markdown-it-renderer-fence/markup-highlight` for v0.5 compatibility.
+- For additional behavior details, see upstream package READMEs/changelogs.
+
 ## 0.6.0 2025/03/05
 
 Major changes.
@@ -42,7 +86,7 @@ Major changes.
         - If you run the same command continuously, things will go wrong.
         - By setting `lang="en"` in Yaml like frontmatter, when there is no caption label, "Figure" will be used instead of "図".
 - Change `role="doc-example"` of figure:is(.f-pre-code, .f-pre-samp) is no longer granted by default.
-    - If you want to grant the role as before, set the option setRoleDocExample to true.
+    - If you want to grant the role as before, set the option figure.roleDocExample to true.
 - Fix CSS to draw a straight line at the top of a table when the table does not have a header at the top.
 - Add experimental option: imgAltCaption, imgTitleCaption
     - The alt and title attributes of the img attribute are used as captions.

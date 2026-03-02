@@ -7,3 +7,13 @@ vsc-extension-quickstart.md
 **/jsconfig.json
 **/*.map
 **/.eslintrc.json
+src/**
+plan**
+
+# Exclude node_modules
+node_modules/**
+AGENTS.md
+SKILL.md
+dev-note.md
+build.js
+*.vsix

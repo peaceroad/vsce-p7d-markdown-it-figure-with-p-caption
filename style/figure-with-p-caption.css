@@ -49,14 +49,14 @@
 }
 
 .vscode-body figure.f-img-horizontal,
-.vscode-body figure.f-mulitiple {
+.vscode-body figure.f-img-multiple {
   flex-wrap: wrap;
   justify-content: space-between;
   flex-direction: row;
   max-inline-size: 100%;
 }
 .vscode-body figure.f-img-horizontal figcaption,
-.vscode-body figure.f-mulitiple figcaption {
+.vscode-body figure.f-img-multiple figcaption {
   display: block;
   flex-basis: 100%;
   text-align: center;
